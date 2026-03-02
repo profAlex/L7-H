@@ -1,4 +1,4 @@
-export type UserMeViewModel = {
+    export type UserMeViewModel = {
     email: string;
     login: string;
     userId: string;

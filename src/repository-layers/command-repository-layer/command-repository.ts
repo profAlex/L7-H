@@ -20,6 +20,7 @@ import { token } from "../../adapters/verification/token-type";
 import { HttpStatus } from "../../common/http-statuses/http-statuses";
 import { CommentStorageModel } from "../../routers/router-types/comment-storage-model";
 import { CommentInputModel } from "../../routers/router-types/comment-input-model";
+import { User } from "../../common/classes/user-class";
 
 export type BloggerCollectionStorageModel = {
     _id: ObjectId;
@@ -492,16 +493,33 @@ export const dataCommandRepository = {
             const passwordHash = await bcryptService.generateHash(
                 sentNewUser.password,
             );
+            if (!passwordHash) {
+                throw new CustomError({
+                    errorMessage: {
+                        field: "bcryptService.generateHash",
+                        message: "Generating hash error",
+                    },
+                });
+            }
 
             const tempId = new ObjectId();
-            const newUserEntry = {
-                _id: tempId,
-                id: tempId.toString(),
-                login: sentNewUser.login,
-                email: sentNewUser.email,
-                passwordHash: passwordHash,
-                createdAt: new Date(),
-            } as UserCollectionStorageModel;
+
+            // нижеследующее заменили на инициализацию через клас User и extend interface UserCollectionStorageModel
+            // const newUserEntry = {
+            //     _id: tempId,
+            //     id: tempId.toString(),
+            //     login: sentNewUser.login,
+            //     email: sentNewUser.email,
+            //     passwordHash: passwordHash,
+            //     createdAt: new Date(),
+            // } as UserCollectionStorageModel;
+
+            const newUserEntry = new User(
+                sentNewUser.login,
+                sentNewUser.email,
+                passwordHash,
+                tempId,
+            );
 
             const result = await usersCollection.insertOne(newUserEntry);
 
