@@ -7,7 +7,7 @@ import {
     postsCollection,
     usersCollection,
 } from "../../db/mongo.db";
-import { ObjectId } from "mongodb";
+import { ObjectId, WithId } from "mongodb";
 import { BlogPostInputModel } from "../../routers/router-types/blog-post-input-model";
 import { CustomError } from "../utility/custom-error-class";
 import { UserInputModel } from "../../routers/router-types/user-input-model";
@@ -21,6 +21,7 @@ import { HttpStatus } from "../../common/http-statuses/http-statuses";
 import { CommentStorageModel } from "../../routers/router-types/comment-storage-model";
 import { CommentInputModel } from "../../routers/router-types/comment-input-model";
 import { User } from "../../common/classes/user-class";
+import { RegistrationUserInputModel } from "../../routers/router-types/auth-registration-input-model";
 
 export type BloggerCollectionStorageModel = {
     _id: ObjectId;
@@ -504,7 +505,7 @@ export const dataCommandRepository = {
 
             const tempId = new ObjectId();
 
-            // нижеследующее заменили на инициализацию через клас User и extend interface UserCollectionStorageModel
+            // нижеследующее заменили на инициализацию через клас User через extend interface UserCollectionStorageModel
             // const newUserEntry = {
             //     _id: tempId,
             //     id: tempId.toString(),
@@ -520,6 +521,8 @@ export const dataCommandRepository = {
                 passwordHash,
                 tempId,
             );
+
+            newUserEntry.emailConfirmation.isConfirmed = true; // для созданных админом пользователей подтверждения не нужно
 
             const result = await usersCollection.insertOne(newUserEntry);
 
@@ -865,6 +868,120 @@ export const dataCommandRepository = {
             } as CustomResult;
         }
     },
+
+    // *****************************
+    // методы для управления регистрацией новых пользователей
+    // *****************************
+    async registerNewUser(
+        sentNewUser: RegistrationUserInputModel,
+    ): Promise<CustomResult> {
+        try {
+            const passwordHash = await bcryptService.generateHash(
+                sentNewUser.password,
+            );
+
+            if (!passwordHash) {
+                return {
+                    data: null,
+                    statusCode: HttpStatus.InternalServerError,
+                    statusDescription: "",
+                    errorsMessages: [
+                        {
+                            field: "bcryptService.generateHash",
+                            message: "Generating hash error",
+                        },
+                    ],
+                };
+            }
+
+            const tempId = new ObjectId();
+
+            // нижеследующее заменили на инициализацию через клас User через extend interface UserCollectionStorageModel
+            // const newUserEntry = {
+            //     _id: tempId,
+            //     id: tempId.toString(),
+            //     login: sentNewUser.login,
+            //     email: sentNewUser.email,
+            //     passwordHash: passwordHash,
+            //     createdAt: new Date(),
+            // } as UserCollectionStorageModel;
+
+            const newUserEntry = new User(
+                sentNewUser.login,
+                sentNewUser.email,
+                passwordHash,
+                tempId,
+            );
+
+            const result = await usersCollection.insertOne(newUserEntry);
+            // newUserEntry.emailConfirmation.isConfirmed = true; // для созданных админом пользователей подтверждения не нужно
+
+            if (!result.acknowledged) {
+                return {
+                    data: null,
+                    statusCode: HttpStatus.InternalServerError,
+                    statusDescription: "",
+                    errorsMessages: [
+                        {
+                            field: "usersCollection.insertOne(newUserEntry)",
+                            message: "attempt to insert new user entry failed",
+                        },
+                    ],
+                };
+            }
+
+            // здесь отсылка письма
+            // после этого отправка результата что все ОК
+        } catch (error) {
+            return {
+                data: null,
+                statusCode: HttpStatus.InternalServerError,
+                statusDescription: "usersCollection.insertOne(newUserEntry)",
+                errorsMessages: [
+                    {
+                        field: "",
+                        message: "Unknown error",
+                    },
+                ],
+            };
+        }
+
+        return {
+            data: null,
+            statusCode: HttpStatus.NoContent,
+            statusDescription: "",
+            errorsMessages: [
+                {
+                    field: "",
+                    message: "",
+                },
+            ],
+        };
+    },
+
+    async findByLoginOrEmail(loginOrEmail: string): Promise<boolean> {
+        try {
+            const user = await usersCollection.findOne(
+                {
+                    $or: [
+                        { email: { loginOrEmail } },
+                        { login: { loginOrEmail } },
+                    ],
+                },
+                { projection: { _id: 1 } }, // т.к. нам не нужны все данные по юзеру, то оптимизируем - запрашиваем только _id
+            );
+            return !!user;
+        } catch (error) {
+            // не оптимально, но пока не унифицирован подход к обработке ошибок - оставляем
+            console.error(
+                "Internal DB error in dataCommandRepository -> findByLoginOrEmail:",
+                error,
+            );
+
+            return false;
+        }
+    },
+
     // *****************************
     // методы для тестов
     // *****************************

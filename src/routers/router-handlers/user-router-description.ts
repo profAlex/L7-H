@@ -63,6 +63,7 @@ export const createNewUser = async (req: Request, res: Response) => {
 
     if (insertedId) {
         // а вот здесь уже идем в query repo с айдишником который нам вернул command repo
+        // ЭТО НАДО ЧЕРЕЗ СЕРВИС ВЫЗЫВАТЬ А НЕ НАПРЯМУЮ! ЕСЛИ ЕТЬ СЛОЙ СЕРВИС ДЛЯ РОУТА, ТО ЧЕРЕЗ НЕГО ВСЕГДА ХОДИМ
         const result = await dataQueryRepository.findSingleUser(insertedId);
 
         if (result) {

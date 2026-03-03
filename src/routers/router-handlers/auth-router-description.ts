@@ -4,13 +4,15 @@ import { authService } from "../../service-layer(BLL)/auth-service";
 import { CustomResult } from "../../common/result-type/result-type";
 import { token } from "../../adapters/verification/token-type";
 import { HttpStatus } from "../../common/http-statuses/http-statuses";
-import { RequestWithUserId } from "../request-types/request-types";
+import { RequestWithBody, RequestWithUserId } from "../request-types/request-types";
 import { UserIdType } from "../router-types/user-id-type";
 import { dataQueryRepository } from "../../repository-layers/query-repository-layer/query-repository";
 import { LoginSuccessViewModel } from "../../adapters/verification/auth-success-login-model";
+import { AuthLoginInputModel } from "../router-types/auth-login-input-model";
+import { RegistrationUserInputModel } from "../router-types/auth-registration-input-model";
 
 export const attemptToLogin = async (
-    req: Request<{}, {}, LoginInputModel, {}>,
+    req: Request<{}, {}, AuthLoginInputModel, {}>,
     res: Response,
 ) => {
     const { loginOrEmail, password } = req.body;
@@ -49,6 +51,29 @@ export const provideUserInfo = async (
             .json("Not authorized");
     }
 
+    // ДОЛЖНО ИДТИ ЧЕРЕЗ СЕРВИС!
     const userInfo = await dataQueryRepository.findUserForMe(userId);
     return res.status(HttpStatus.Ok).send(userInfo);
+};
+
+export const registrationAttemptByUser = async (
+    req: RequestWithBody<RegistrationUserInputModel>,
+    res: Response,
+) => {
+    // const { loginOrEmail, password } = req.body;
+    const registrationResult: CustomResult =
+        await authService.registerNewUser(req.body);
+
+    if (registrationResult.statusCode !== HttpStatus.Ok) {
+        console.error(
+            "Error description: ",
+            registrationResult?.statusDescription,
+            JSON.stringify(registrationResult.errorsMessages),
+        );
+
+        return res.status(registrationResult.statusCode).send("Error");
+    }
+
+    return res.sendStatus(HttpStatus.NoContent);
+
 };

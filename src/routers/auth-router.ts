@@ -3,12 +3,13 @@ import { inputErrorManagementMiddleware } from "./validation-middleware/error-ma
 import { loginInputModelValidation } from "./validation-middleware/UserInputModel-validation-middleware";
 import {
     attemptToLogin,
-    provideUserInfo,
+    provideUserInfo, registrationAttemptByUser
 } from "./router-handlers/auth-router-description";
 import { tokenGuardVerification } from "./guard-middleware/token-guard";
 
 export const authRouter = Router();
 
+// Try login user to the system
 authRouter.post(
     "/login",
     loginInputModelValidation,
@@ -16,4 +17,8 @@ authRouter.post(
     attemptToLogin,
 );
 
+// Registration in the system. Email with confirmation code will be send to passed email address
+authRouter.post("/registration", loginInputModelValidation, inputErrorManagementMiddleware, registrationAttemptByUser);
+
+// Get information about current user
 authRouter.get("/me", tokenGuardVerification, provideUserInfo);

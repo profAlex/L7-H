@@ -6,6 +6,8 @@ import { JwtPayloadType } from "../adapters/verification/payload-type";
 import { HttpStatus } from "../common/http-statuses/http-statuses";
 import { token } from "../adapters/verification/token-type";
 import { LoginSuccessViewModel } from "../adapters/verification/auth-success-login-model";
+import { RegistrationUserInputModel } from "../routers/router-types/auth-registration-input-model";
+import { dataCommandRepository } from "../repository-layers/command-repository-layer/command-repository";
 
 export const authService = {
     async loginUser(
@@ -25,7 +27,7 @@ export const authService = {
                         message: "Wrong login or password",
                     },
                 ],
-            } as CustomResult<LoginSuccessViewModel>;
+            };
 
         const isCorrectCredentials = await this.checkUserCredentials(
             password,
@@ -43,7 +45,7 @@ export const authService = {
                         message: "Wrong login or password",
                     },
                 ],
-            } as CustomResult<LoginSuccessViewModel>;
+            };
         } else if (isCorrectCredentials === null) {
             return {
                 data: null,
@@ -57,7 +59,7 @@ export const authService = {
                             "Failed attempt to check credentials login or password",
                     },
                 ],
-            } as CustomResult<LoginSuccessViewModel>;
+            };
         }
 
         const resultedToken = await jwtService.createToken({ userId: user.id });
@@ -65,6 +67,50 @@ export const authService = {
         return resultedToken;
     },
 
+    // пробуем зарегистрировать пользователя по его запросу (т.е. по запросу фронта)
+    async registerNewUser(
+        sentData: RegistrationUserInputModel,
+    ): Promise<CustomResult> {
+    try{
+
+        const ifUserLoginExists = await dataCommandRepository.findByLoginOrEmail(sentData.login);
+        const ifUserEmailExists = await dataCommandRepository.findByLoginOrEmail(sentData.login);
+
+        if(ifUserLoginExists || ifUserEmailExists)
+        {
+            return {
+                data: null,
+                statusCode: HttpStatus.BadRequest,
+                statusDescription:
+                    "authService -> registerNewUser -> if(ifUserLoginExists || ifUserEmailExists)",
+                errorsMessages: [
+                    {
+                        field: "",
+                        message: "Email or Login already exists",
+                    },
+                ],
+            }
+        }
+
+        return await dataCommandRepository.registerNewUser(sentData);
+
+    } catch (error) {
+        return {
+            data: null,
+            statusCode: HttpStatus.InternalServerError,
+            statusDescription:
+                "Unknown error in authService -> registerNewUser",
+            errorsMessages: [
+                {
+                    field: "",
+                    message: "Unknown error",
+                },
+            ],
+        }
+    }
+    },
+
+    // вспомогательная функция
     async checkUserCredentials(
         password: string,
         passwordHash: string,
