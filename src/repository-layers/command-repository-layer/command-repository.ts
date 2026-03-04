@@ -22,7 +22,9 @@ import { CommentStorageModel } from "../../routers/router-types/comment-storage-
 import { CommentInputModel } from "../../routers/router-types/comment-input-model";
 import { User } from "../../common/classes/user-class";
 import { RegistrationUserInputModel } from "../../routers/router-types/auth-registration-input-model";
-import nodemailer from 'nodemailer';
+import nodemailer from "nodemailer";
+import { emailExamples, mailerService } from "../../adapters/email-sender/mailer-service";
+
 
 
 export type BloggerCollectionStorageModel = {
@@ -941,6 +943,7 @@ export const dataCommandRepository = {
                     ]
                 };
             }
+            // СГЕНЕРИРОВАТЬ РЕГИСТРАЦИОННЫЙ КОД
 
             // здесь отсылка письма. с точки зрения обработки потенциальных ошибок
             // максимум того что целесообразно сделать, это в том случае если по какой-то причине с нашей стороны чтото сломалось
@@ -950,13 +953,19 @@ export const dataCommandRepository = {
             // а если письмо просто потерялось или юзер тупит - для нас это может быть куча лишней работы по обслуживанию непонятно чего
             // так что во втором случае пусть юзер сам лучше на себя возьмет это работу - просто повторно отправит если что запррос, нам главно оптимально подобрать период удалления неподтвержденных данных (минут 15-30)
 
+            const sendingResult = await mailerService.sendConfirmationRegisterEmail("\"Alex St\" <geniusb198@yandex.ru>", newUserEntry.email, newUserEntry.emailConfirmation.confirmationCode, emailExamples.registrationEmail);
 
+            let status = "Sending went without problems, awaiting confirmation form user"
+            if(!sendingResult){
+                console.error("Something went wrong during the sending the registration email");
+                status = "Something went wrong during the sending the registration email";
+            }
 
             // отправка результата что все ОК
             return {
                 data: null,
                 statusCode: HttpStatus.NoContent,
-                statusDescription: "",
+                statusDescription: status,
                 errorsMessages: [
                     {
                         field: "",

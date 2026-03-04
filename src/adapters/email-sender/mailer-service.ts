@@ -16,7 +16,7 @@ export const emailExamples = {
 }
 
 export const mailerService = {
-    async sendConfirmationRegisterEmail(from: string, to: string, subject:string, text:string, ) {
+    async sendConfirmationRegisterEmail(from: string, to: string, registrationCode: string, template: (registrationCode: string) => string) {
 
         const transporter = nodemailer.createTransport({
             host: "smtp.yandex.ru",
@@ -29,42 +29,46 @@ export const mailerService = {
         });
 
         const mailOptions = {
-            from: "\"Alex St\" <geniusb198@yandex.ru>", // имя и email отправителя
-            to: "geniusb198@yandex.ru", // адрес получателя
-            subject: "Тестовое письмо", // тема письма
-            text: "Привет! Это простое текстовое письмо.", // текст письма
-            html: '<h1>Это HTML-письмо</h1>', // если нужно отправить HTML
+            from: from || "\"Alex St\" <geniusb198@yandex.ru>",
+            to: to,
+            subject: "Registration confirmation",
+            text: "Please, follow the provided link to finish Your registration.",
+            html: template(registrationCode),
         };
 
         try {
             const info = await transporter.sendMail(mailOptions);
-            console.log("Письмо отправлено:", info.messageId);
+            // console.log("Письмо отправлено:", info.messageId);
+
+            return !!info;
         } catch (error) {
             console.error("Ошибка отправки письма:", error);
+
+            return false;
         }
 
     },
 
-    async sendEmail(
-        email: string,
-        code: string,
-        template: (code: string) => string
-    ): Promise<boolean> {
-        let transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                user: appConfig.EMAIL,
-                pass: appConfig.EMAIL_PASS
-            }
-        });
-
-        let info = await transporter.sendMail({
-            from: "\"Kek 👻\" <codeSender>",
-            to: email,
-            subject: "Your code is here",
-            html: template(code) // html body
-        });
-
-        return !!info;
-    }
+    // async sendEmail(
+    //     email: string,
+    //     code: string,
+    //     template: (code: string) => string
+    // ): Promise<boolean> {
+    //     let transporter = nodemailer.createTransport({
+    //         service: "gmail",
+    //         auth: {
+    //             user: appConfig.EMAIL,
+    //             pass: appConfig.EMAIL_PASS
+    //         }
+    //     });
+    //
+    //     let info = await transporter.sendMail({
+    //         from: "\"Kek 👻\" <codeSender>",
+    //         to: email,
+    //         subject: "Your code is here",
+    //         html: template(code) // html body
+    //     });
+    //
+    //     return !!info;
+    // }
 };

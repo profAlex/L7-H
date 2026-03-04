@@ -22,7 +22,7 @@ export class User {
         this.passwordHash = hash;
         this.createdAt = new Date();
         this.emailConfirmation = {
-            confirmationCode: "",
+            confirmationCode: randomUUID(),
             expirationDate: new Date(
                 new Date().setDate(new Date().getMinutes() + 30),
             ),
