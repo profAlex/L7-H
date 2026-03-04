@@ -9,10 +9,12 @@ import { LoginSuccessViewModel } from "../adapters/verification/auth-success-log
 import { RegistrationUserInputModel } from "../routers/router-types/auth-registration-input-model";
 import { dataCommandRepository } from "../repository-layers/command-repository-layer/command-repository";
 
+
+
 export const authService = {
     async loginUser(
         loginOrEmail: string,
-        password: string,
+        password: string
     ): Promise<CustomResult<LoginSuccessViewModel>> {
         const user = await dataQueryRepository.findByLoginOrEmail(loginOrEmail);
 
@@ -24,14 +26,14 @@ export const authService = {
                 errorsMessages: [
                     {
                         field: "dataQueryRepository.findByLoginOrEmail", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                        message: "Wrong login or password",
-                    },
-                ],
+                        message: "Wrong login or password"
+                    }
+                ]
             };
 
         const isCorrectCredentials = await this.checkUserCredentials(
             password,
-            user.passwordHash,
+            user.passwordHash
         );
 
         if (isCorrectCredentials === false) {
@@ -42,9 +44,9 @@ export const authService = {
                 errorsMessages: [
                     {
                         field: "loginUser -> checkUserCredentials",
-                        message: "Wrong login or password",
-                    },
-                ],
+                        message: "Wrong login or password"
+                    }
+                ]
             };
         } else if (isCorrectCredentials === null) {
             return {
@@ -56,9 +58,9 @@ export const authService = {
                     {
                         field: "loginUser -> checkUserCredentials",
                         message:
-                            "Failed attempt to check credentials login or password",
-                    },
-                ],
+                            "Failed attempt to check credentials login or password"
+                    }
+                ]
             };
         }
 
@@ -69,52 +71,51 @@ export const authService = {
 
     // пробуем зарегистрировать пользователя по его запросу (т.е. по запросу фронта)
     async registerNewUser(
-        sentData: RegistrationUserInputModel,
+        sentData: RegistrationUserInputModel
     ): Promise<CustomResult> {
-    try{
+        try {
 
-        const ifUserLoginExists = await dataCommandRepository.findByLoginOrEmail(sentData.login);
-        const ifUserEmailExists = await dataCommandRepository.findByLoginOrEmail(sentData.login);
+            const ifUserLoginExists = await dataCommandRepository.findByLoginOrEmail(sentData.login);
+            const ifUserEmailExists = await dataCommandRepository.findByLoginOrEmail(sentData.login);
 
-        if(ifUserLoginExists || ifUserEmailExists)
-        {
+            if (ifUserLoginExists || ifUserEmailExists) {
+                return {
+                    data: null,
+                    statusCode: HttpStatus.BadRequest,
+                    statusDescription:
+                        "authService -> registerNewUser -> if(ifUserLoginExists || ifUserEmailExists)",
+                    errorsMessages: [
+                        {
+                            field: "",
+                            message: "Email or Login already exists"
+                        }
+                    ]
+                };
+            }
+
+            return await dataCommandRepository.registerNewUser(sentData);
+
+        } catch (error) {
             return {
                 data: null,
-                statusCode: HttpStatus.BadRequest,
+                statusCode: HttpStatus.InternalServerError,
                 statusDescription:
-                    "authService -> registerNewUser -> if(ifUserLoginExists || ifUserEmailExists)",
+                    "Unknown error in authService -> registerNewUser",
                 errorsMessages: [
                     {
                         field: "",
-                        message: "Email or Login already exists",
-                    },
-                ],
-            }
+                        message: "Unknown error"
+                    }
+                ]
+            };
         }
-
-        return await dataCommandRepository.registerNewUser(sentData);
-
-    } catch (error) {
-        return {
-            data: null,
-            statusCode: HttpStatus.InternalServerError,
-            statusDescription:
-                "Unknown error in authService -> registerNewUser",
-            errorsMessages: [
-                {
-                    field: "",
-                    message: "Unknown error",
-                },
-            ],
-        }
-    }
     },
 
     // вспомогательная функция
     async checkUserCredentials(
         password: string,
-        passwordHash: string,
+        passwordHash: string
     ): Promise<boolean | null> {
         return bcryptService.checkPassword(password, passwordHash);
-    },
+    }
 };

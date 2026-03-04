@@ -5,7 +5,7 @@ import {
     bloggersCollection,
     commentsCollection,
     postsCollection,
-    usersCollection,
+    usersCollection
 } from "../../db/mongo.db";
 import { ObjectId, WithId } from "mongodb";
 import { BlogPostInputModel } from "../../routers/router-types/blog-post-input-model";
@@ -22,6 +22,8 @@ import { CommentStorageModel } from "../../routers/router-types/comment-storage-
 import { CommentInputModel } from "../../routers/router-types/comment-input-model";
 import { User } from "../../common/classes/user-class";
 import { RegistrationUserInputModel } from "../../routers/router-types/auth-registration-input-model";
+import nodemailer from 'nodemailer';
+
 
 export type BloggerCollectionStorageModel = {
     _id: ObjectId;
@@ -44,29 +46,39 @@ export type PostCollectionStorageModel = {
     createdAt: Date;
 };
 
+
+
 async function findBlogByPrimaryKey(
-    id: ObjectId,
+    id: ObjectId
 ): Promise<BloggerCollectionStorageModel | null> {
     return bloggersCollection.findOne({ _id: id });
 }
 
+
+
 async function findPostByPrimaryKey(
-    id: ObjectId,
+    id: ObjectId
 ): Promise<PostCollectionStorageModel | null> {
     return postsCollection.findOne({ _id: id });
 }
 
+
+
 async function findUserByPrimaryKey(
-    id: ObjectId,
+    id: ObjectId
 ): Promise<UserCollectionStorageModel | null> {
     return usersCollection.findOne({ _id: id });
 }
 
+
+
 async function findCommentByPrimaryKey(
-    id: ObjectId,
+    id: ObjectId
 ): Promise<CommentStorageModel | null> {
     return commentsCollection.findOne({ _id: id });
 }
+
+
 
 export const dataCommandRepository = {
     // *****************************
@@ -81,7 +93,7 @@ export const dataCommandRepository = {
                 id: tempId.toString(),
                 ...newBlog,
                 createdAt: new Date(),
-                isMembership: false,
+                isMembership: false
             } as BloggerCollectionStorageModel;
 
             const result = await bloggersCollection.insertOne(newBlogEntry);
@@ -90,8 +102,8 @@ export const dataCommandRepository = {
                 throw new CustomError({
                     errorMessage: {
                         field: "bloggersCollection.insertOne(newBlogEntry)",
-                        message: "attempt to insert new blog entry failed",
-                    },
+                        message: "attempt to insert new blog entry failed"
+                    }
                 });
             }
 
@@ -101,7 +113,7 @@ export const dataCommandRepository = {
                 if (error.metaData) {
                     const errorData = error.metaData.errorMessage;
                     console.error(
-                        `In field: ${errorData.field} - ${errorData.message}`,
+                        `In field: ${errorData.field} - ${errorData.message}`
                     );
                 } else {
                     console.error(`Unknown error: ${JSON.stringify(error)}`);
@@ -112,7 +124,7 @@ export const dataCommandRepository = {
             } else {
                 console.error(`Unknown error: ${JSON.stringify(error)}`);
                 throw new Error(
-                    "Placeholder for an error to be rethrown and dealt with in the future in createNewBlog method of dataCommandRepository",
+                    "Placeholder for an error to be rethrown and dealt with in the future in createNewBlog method of dataCommandRepository"
                 );
             }
         }
@@ -120,22 +132,22 @@ export const dataCommandRepository = {
 
     async updateBlog(
         blogId: string,
-        newData: BlogInputModel,
+        newData: BlogInputModel
     ): Promise<null | undefined> {
         try {
             if (ObjectId.isValid(blogId)) {
                 const idToCheck = new ObjectId(blogId);
                 const res = await bloggersCollection.updateOne(
                     { _id: idToCheck },
-                    { $set: { ...newData } },
+                    { $set: { ...newData } }
                 );
 
                 if (!res.acknowledged) {
                     throw new CustomError({
                         errorMessage: {
                             field: "bloggersCollection.updateOne",
-                            message: "attempt to update blog entry failed",
-                        },
+                            message: "attempt to update blog entry failed"
+                        }
                     });
                 }
 
@@ -147,8 +159,8 @@ export const dataCommandRepository = {
                 throw new CustomError({
                     errorMessage: {
                         field: "ObjectId.isValid(blogId)",
-                        message: "invalid blog ID",
-                    },
+                        message: "invalid blog ID"
+                    }
                 });
             }
         } catch (error) {
@@ -156,7 +168,7 @@ export const dataCommandRepository = {
                 if (error.metaData) {
                     const errorData = error.metaData.errorMessage;
                     console.error(
-                        `In field: ${errorData.field} - ${errorData.message}`,
+                        `In field: ${errorData.field} - ${errorData.message}`
                     );
                 } else {
                     console.error(`Unknown error: ${JSON.stringify(error)}`);
@@ -165,10 +177,10 @@ export const dataCommandRepository = {
                 return undefined;
             } else {
                 console.error(
-                    `Unknown error inside dataCommandRepository.updateBlog: ${JSON.stringify(error)}`,
+                    `Unknown error inside dataCommandRepository.updateBlog: ${JSON.stringify(error)}`
                 );
                 throw new Error(
-                    "Placeholder for an error to be rethrown and dealt with in the future in updateBlog method of dataCommandRepository",
+                    "Placeholder for an error to be rethrown and dealt with in the future in updateBlog method of dataCommandRepository"
                 );
             }
         }
@@ -179,15 +191,15 @@ export const dataCommandRepository = {
             if (ObjectId.isValid(blogId)) {
                 const idToCheck = new ObjectId(blogId);
                 const res = await bloggersCollection.deleteOne({
-                    _id: idToCheck,
+                    _id: idToCheck
                 });
 
                 if (!res.acknowledged) {
                     throw new CustomError({
                         errorMessage: {
                             field: "bloggersCollection.deleteOne",
-                            message: "attempt to delete blog entry failed",
-                        },
+                            message: "attempt to delete blog entry failed"
+                        }
                     });
                 }
 
@@ -202,7 +214,7 @@ export const dataCommandRepository = {
                 if (error.metaData) {
                     const errorData = error.metaData.errorMessage;
                     console.error(
-                        `In field: ${errorData.field} - ${errorData.message}`,
+                        `In field: ${errorData.field} - ${errorData.message}`
                     );
                 } else {
                     console.error(`Unknown error: ${JSON.stringify(error)}`);
@@ -212,10 +224,10 @@ export const dataCommandRepository = {
                 return undefined;
             } else {
                 console.error(
-                    `Unknown error inside dataCommandRepository.deleteBlog: ${JSON.stringify(error)}`,
+                    `Unknown error inside dataCommandRepository.deleteBlog: ${JSON.stringify(error)}`
                 );
                 throw new Error(
-                    "Placeholder for an error to be rethrown and dealt with in the future in deleteBlog method of dataCommandRepository",
+                    "Placeholder for an error to be rethrown and dealt with in the future in deleteBlog method of dataCommandRepository"
                 );
             }
         }
@@ -235,7 +247,7 @@ export const dataCommandRepository = {
             content: value.content,
             blogId: value.blogId,
             blogName: value.blogName,
-            createdAt: value.createdAt,
+            createdAt: value.createdAt
         }));
 
         // _id: ObjectId,
@@ -252,7 +264,7 @@ export const dataCommandRepository = {
         try {
             if (ObjectId.isValid(newPost.blogId)) {
                 const relatedBlogger = await findBlogByPrimaryKey(
-                    new ObjectId(newPost.blogId),
+                    new ObjectId(newPost.blogId)
                 );
                 const tempId = new ObjectId();
 
@@ -262,7 +274,7 @@ export const dataCommandRepository = {
                         id: tempId.toString(),
                         ...newPost,
                         blogName: relatedBlogger.name,
-                        createdAt: new Date(),
+                        createdAt: new Date()
                     } as PostCollectionStorageModel;
 
                     const result =
@@ -272,8 +284,8 @@ export const dataCommandRepository = {
                             errorMessage: {
                                 field: "postsCollection.insertOne(newPostEntry)",
                                 message:
-                                    "attempt to insert new post entry failed",
-                            },
+                                    "attempt to insert new post entry failed"
+                            }
                         });
                     }
 
@@ -282,16 +294,16 @@ export const dataCommandRepository = {
                     throw new CustomError({
                         errorMessage: {
                             field: "findBlogByPrimaryKey(new ObjectId(newPost.blogId))",
-                            message: "attempt to find blogger failed",
-                        },
+                            message: "attempt to find blogger failed"
+                        }
                     });
                 }
             } else {
                 throw new CustomError({
                     errorMessage: {
                         field: "ObjectId.isValid(newPost.blogId)",
-                        message: "invalid blogId",
-                    },
+                        message: "invalid blogId"
+                    }
                 });
             }
         } catch (error) {
@@ -299,7 +311,7 @@ export const dataCommandRepository = {
                 if (error.metaData) {
                     const errorData = error.metaData.errorMessage;
                     console.error(
-                        `In field: ${errorData.field} - ${errorData.message}`,
+                        `In field: ${errorData.field} - ${errorData.message}`
                     );
                 } else {
                     console.error(`Unknown error: ${JSON.stringify(error)}`);
@@ -309,10 +321,10 @@ export const dataCommandRepository = {
                 return undefined;
             } else {
                 console.error(
-                    `Unknown error inside dataCommandRepository.createNewPost: ${JSON.stringify(error)}`,
+                    `Unknown error inside dataCommandRepository.createNewPost: ${JSON.stringify(error)}`
                 );
                 throw new Error(
-                    "Placeholder for an error to be rethrown and dealt with in the future in createNewPost method of dataCommandRepository",
+                    "Placeholder for an error to be rethrown and dealt with in the future in createNewPost method of dataCommandRepository"
                 );
             }
         }
@@ -320,12 +332,12 @@ export const dataCommandRepository = {
 
     async createNewBlogPost(
         sentBlogId: string,
-        newPost: BlogPostInputModel,
+        newPost: BlogPostInputModel
     ): Promise<string | undefined> {
         try {
             if (ObjectId.isValid(sentBlogId)) {
                 const relatedBlogger = await findBlogByPrimaryKey(
-                    new ObjectId(sentBlogId),
+                    new ObjectId(sentBlogId)
                 );
                 const tempId = new ObjectId();
 
@@ -336,7 +348,7 @@ export const dataCommandRepository = {
                         ...newPost,
                         blogId: sentBlogId,
                         blogName: relatedBlogger.name,
-                        createdAt: new Date(),
+                        createdAt: new Date()
                     } as PostCollectionStorageModel;
 
                     const result =
@@ -346,8 +358,8 @@ export const dataCommandRepository = {
                             errorMessage: {
                                 field: "postsCollection.insertOne(newPostEntry)",
                                 message:
-                                    "attempt to insert new post entry failed",
-                            },
+                                    "attempt to insert new post entry failed"
+                            }
                         });
                     }
 
@@ -359,7 +371,7 @@ export const dataCommandRepository = {
                 if (error.metaData) {
                     const errorData = error.metaData.errorMessage;
                     console.error(
-                        `In field: ${errorData.field} - ${errorData.message}`,
+                        `In field: ${errorData.field} - ${errorData.message}`
                     );
                 } else {
                     console.error(`Unknown error: ${JSON.stringify(error)}`);
@@ -370,7 +382,7 @@ export const dataCommandRepository = {
             } else {
                 console.error(`Unknown error: ${JSON.stringify(error)}`);
                 throw new Error(
-                    "Placeholder for an error to be rethrown and dealt with in the future in createNewBlogPost method of dataCommandRepository",
+                    "Placeholder for an error to be rethrown and dealt with in the future in createNewBlogPost method of dataCommandRepository"
                 );
             }
         }
@@ -378,22 +390,22 @@ export const dataCommandRepository = {
 
     async updatePost(
         postId: string,
-        newData: PostInputModel,
+        newData: PostInputModel
     ): Promise<null | undefined> {
         try {
             if (ObjectId.isValid(postId)) {
                 const idToCheck = new ObjectId(postId);
                 const res = await postsCollection.updateOne(
                     { _id: idToCheck },
-                    { $set: { ...newData } },
+                    { $set: { ...newData } }
                 );
 
                 if (!res.acknowledged) {
                     throw new CustomError({
                         errorMessage: {
                             field: "postsCollection.updateOne",
-                            message: "attempt to update post entry failed",
-                        },
+                            message: "attempt to update post entry failed"
+                        }
                     });
                 }
 
@@ -405,8 +417,8 @@ export const dataCommandRepository = {
                 throw new CustomError({
                     errorMessage: {
                         field: "ObjectId.isValid(postId)",
-                        message: "invalid post ID",
-                    },
+                        message: "invalid post ID"
+                    }
                 });
             }
         } catch (error) {
@@ -414,7 +426,7 @@ export const dataCommandRepository = {
                 if (error.metaData) {
                     const errorData = error.metaData.errorMessage;
                     console.error(
-                        `In field: ${errorData.field} - ${errorData.message}`,
+                        `In field: ${errorData.field} - ${errorData.message}`
                     );
                 } else {
                     console.error(`Unknown error: ${JSON.stringify(error)}`);
@@ -424,10 +436,10 @@ export const dataCommandRepository = {
                 return undefined;
             } else {
                 console.error(
-                    `Unknown error inside dataCommandRepository.updatePost: ${JSON.stringify(error)}`,
+                    `Unknown error inside dataCommandRepository.updatePost: ${JSON.stringify(error)}`
                 );
                 throw new Error(
-                    "Placeholder for an error to be rethrown and dealt with in the future in updatePost method of dataCommandRepository",
+                    "Placeholder for an error to be rethrown and dealt with in the future in updatePost method of dataCommandRepository"
                 );
             }
         }
@@ -443,8 +455,8 @@ export const dataCommandRepository = {
                     throw new CustomError({
                         errorMessage: {
                             field: "postsCollection.deleteOne",
-                            message: "attempt to delete post entry failed",
-                        },
+                            message: "attempt to delete post entry failed"
+                        }
                     });
                 }
 
@@ -455,8 +467,8 @@ export const dataCommandRepository = {
                 throw new CustomError({
                     errorMessage: {
                         field: "ObjectId.isValid(postId)",
-                        message: "invalid post ID",
-                    },
+                        message: "invalid post ID"
+                    }
                 });
             }
         } catch (error) {
@@ -464,7 +476,7 @@ export const dataCommandRepository = {
                 if (error.metaData) {
                     const errorData = error.metaData.errorMessage;
                     console.error(
-                        `In field: ${errorData.field} - ${errorData.message}`,
+                        `In field: ${errorData.field} - ${errorData.message}`
                     );
                 } else {
                     console.error(`Unknown error: ${JSON.stringify(error)}`);
@@ -474,10 +486,10 @@ export const dataCommandRepository = {
                 return undefined;
             } else {
                 console.error(
-                    `Unknown error inside dataCommandRepository.deletePost: ${JSON.stringify(error)}`,
+                    `Unknown error inside dataCommandRepository.deletePost: ${JSON.stringify(error)}`
                 );
                 throw new Error(
-                    "Placeholder for an error to be rethrown and dealt with in the future in deletePost method of dataCommandRepository",
+                    "Placeholder for an error to be rethrown and dealt with in the future in deletePost method of dataCommandRepository"
                 );
             }
         }
@@ -488,18 +500,18 @@ export const dataCommandRepository = {
     // *****************************
 
     async createNewUser(
-        sentNewUser: UserInputModel,
+        sentNewUser: UserInputModel
     ): Promise<string | undefined> {
         try {
             const passwordHash = await bcryptService.generateHash(
-                sentNewUser.password,
+                sentNewUser.password
             );
             if (!passwordHash) {
                 throw new CustomError({
                     errorMessage: {
                         field: "bcryptService.generateHash",
-                        message: "Generating hash error",
-                    },
+                        message: "Generating hash error"
+                    }
                 });
             }
 
@@ -519,7 +531,7 @@ export const dataCommandRepository = {
                 sentNewUser.login,
                 sentNewUser.email,
                 passwordHash,
-                tempId,
+                tempId
             );
 
             newUserEntry.emailConfirmation.isConfirmed = true; // для созданных админом пользователей подтверждения не нужно
@@ -530,8 +542,8 @@ export const dataCommandRepository = {
                 throw new CustomError({
                     errorMessage: {
                         field: "usersCollection.insertOne(newUserEntry)",
-                        message: "attempt to insert new user entry failed",
-                    },
+                        message: "attempt to insert new user entry failed"
+                    }
                 });
             }
             return result.insertedId.toString();
@@ -540,7 +552,7 @@ export const dataCommandRepository = {
                 if (error.metaData) {
                     const errorData = error.metaData.errorMessage;
                     console.error(
-                        `In field: ${errorData.field} - ${errorData.message}`,
+                        `In field: ${errorData.field} - ${errorData.message}`
                     );
                 } else {
                     console.error(`Unknown error: ${JSON.stringify(error)}`);
@@ -550,7 +562,7 @@ export const dataCommandRepository = {
             } else {
                 console.error(`Unknown error: ${JSON.stringify(error)}`);
                 throw new Error(
-                    "Placeholder for an error to be rethrown and dealt with in the future in createNewUser method of dataCommandRepository",
+                    "Placeholder for an error to be rethrown and dealt with in the future in createNewUser method of dataCommandRepository"
                 );
             }
         }
@@ -566,8 +578,8 @@ export const dataCommandRepository = {
                     throw new CustomError({
                         errorMessage: {
                             field: "usersCollection.deleteOne",
-                            message: "attempt to delete user entry failed",
-                        },
+                            message: "attempt to delete user entry failed"
+                        }
                     });
                 }
 
@@ -582,7 +594,7 @@ export const dataCommandRepository = {
                 if (error.metaData) {
                     const errorData = error.metaData.errorMessage;
                     console.error(
-                        `In field: ${errorData.field} - ${errorData.message}`,
+                        `In field: ${errorData.field} - ${errorData.message}`
                     );
                 } else {
                     console.error(`Unknown error: ${JSON.stringify(error)}`);
@@ -591,10 +603,10 @@ export const dataCommandRepository = {
                 return undefined;
             } else {
                 console.error(
-                    `Unknown error inside dataCommandRepository.deleteUser: ${JSON.stringify(error)}`,
+                    `Unknown error inside dataCommandRepository.deleteUser: ${JSON.stringify(error)}`
                 );
                 throw new Error(
-                    "Placeholder for an error to be rethrown and dealt with in the future in deleteUser method of dataCommandRepository",
+                    "Placeholder for an error to be rethrown and dealt with in the future in deleteUser method of dataCommandRepository"
                 );
             }
         }
@@ -606,7 +618,7 @@ export const dataCommandRepository = {
     async createNewComment(
         postId: string,
         content: string,
-        userId: string,
+        userId: string
     ): Promise<CustomResult<CommentViewModel>> {
         try {
             if (ObjectId.isValid(userId) && ObjectId.isValid(postId)) {
@@ -624,9 +636,9 @@ export const dataCommandRepository = {
                         errorsMessages: [
                             {
                                 field: "dataCommandRepository.createNewComment -> findUserByPrimaryKey(new ObjectId(userId))", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                                message: "Couldn't find User record", // ошибкам надо присваивать кода, чтобы пользователи могли сообщать номер ошибки в техподдержку
-                            },
-                        ],
+                                message: "Couldn't find User record" // ошибкам надо присваивать кода, чтобы пользователи могли сообщать номер ошибки в техподдержку
+                            }
+                        ]
                     } as CustomResult<CommentViewModel>;
                 }
                 const userLogin = user.login;
@@ -639,7 +651,7 @@ export const dataCommandRepository = {
                     relatedPostId: postId,
                     content: content,
                     commentatorInfo: { userId: userId, userLogin: userLogin },
-                    createdAt: new Date(),
+                    createdAt: new Date()
                 } as CommentStorageModel;
 
                 const result =
@@ -653,9 +665,9 @@ export const dataCommandRepository = {
                         errorsMessages: [
                             {
                                 field: "dataCommandRepository.createNewComment -> commentsCollection.insertOne(newCommentEntry)", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                                message: "Error while inserting new comment",
-                            },
-                        ],
+                                message: "Error while inserting new comment"
+                            }
+                        ]
                     } as CustomResult<CommentViewModel>;
                 }
 
@@ -664,15 +676,15 @@ export const dataCommandRepository = {
                         id: newCommentEntry.id,
                         content: newCommentEntry.content,
                         commentatorInfo: newCommentEntry.commentatorInfo,
-                        createdAt: newCommentEntry.createdAt,
+                        createdAt: newCommentEntry.createdAt
                     } as CommentViewModel,
                     statusCode: HttpStatus.Created,
                     errorsMessages: [
                         {
                             field: null,
-                            message: null,
-                        },
-                    ],
+                            message: null
+                        }
+                    ]
                 } as CustomResult<CommentViewModel>;
             } else {
                 return {
@@ -683,9 +695,9 @@ export const dataCommandRepository = {
                     errorsMessages: [
                         {
                             field: "dataCommandRepository.createNewComment -> if (ObjectId.isValid(userId) && ObjectId.isValid(postId))", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                            message: "User ID or Post ID have invalid format",
-                        },
-                    ],
+                            message: "User ID or Post ID have invalid format"
+                        }
+                    ]
                 } as CustomResult<CommentViewModel>;
             }
         } catch (error) {
@@ -698,9 +710,9 @@ export const dataCommandRepository = {
                 errorsMessages: [
                     {
                         field: "dataCommandRepository.createNewComment", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                        message: `Unknown error inside try-catch block: ${JSON.stringify(error)}`,
-                    },
-                ],
+                        message: `Unknown error inside try-catch block: ${JSON.stringify(error)}`
+                    }
+                ]
             } as CustomResult<CommentViewModel>;
         }
     },
@@ -708,11 +720,11 @@ export const dataCommandRepository = {
     async updateCommentById(
         sentCommentId: string,
         sentUserId: string,
-        sentContent: CommentInputModel,
+        sentContent: CommentInputModel
     ): Promise<CustomResult> {
         try {
             const comment = await findCommentByPrimaryKey(
-                new ObjectId(sentCommentId),
+                new ObjectId(sentCommentId)
             );
 
             if (!comment) {
@@ -723,9 +735,9 @@ export const dataCommandRepository = {
                     errorsMessages: [
                         {
                             field: "if (!comment) inside dataCommandRepository.updateCommentById", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                            message: `Internal Server Error`,
-                        },
-                    ],
+                            message: `Internal Server Error`
+                        }
+                    ]
                 } as CustomResult;
             }
 
@@ -737,15 +749,15 @@ export const dataCommandRepository = {
                     errorsMessages: [
                         {
                             field: "if (sentUserId !== comment.commentatorInfo.userId) inside dataCommandRepository.updateCommentById", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                            message: `User is forbidden to change another user’s comment`,
-                        },
-                    ],
+                            message: `User is forbidden to change another user’s comment`
+                        }
+                    ]
                 } as CustomResult;
             }
 
             const res = await commentsCollection.updateOne(
                 { _id: new ObjectId(sentCommentId) },
-                { $set: { content: sentContent.content } },
+                { $set: { content: sentContent.content } }
             );
 
             if (!res.acknowledged) {
@@ -756,9 +768,9 @@ export const dataCommandRepository = {
                     errorsMessages: [
                         {
                             field: "bloggersCollection.updateOne inside dataCommandRepository.updateCommentById", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                            message: `Unknown error while trying to update comment`,
-                        },
-                    ],
+                            message: `Unknown error while trying to update comment`
+                        }
+                    ]
                 } as CustomResult;
             }
 
@@ -769,9 +781,9 @@ export const dataCommandRepository = {
                 errorsMessages: [
                     {
                         field: "",
-                        message: "",
-                    },
-                ],
+                        message: ""
+                    }
+                ]
             } as CustomResult;
         } catch (error) {
             return {
@@ -781,20 +793,20 @@ export const dataCommandRepository = {
                 errorsMessages: [
                     {
                         field: "dataCommandRepository.updateCommentById", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                        message: `Unknown error inside try-catch block: ${JSON.stringify(error)}`,
-                    },
-                ],
+                        message: `Unknown error inside try-catch block: ${JSON.stringify(error)}`
+                    }
+                ]
             } as CustomResult;
         }
     },
 
     async deleteCommentById(
         sentCommentId: string,
-        sentUserId: string,
+        sentUserId: string
     ): Promise<CustomResult> {
         try {
             const comment = await findCommentByPrimaryKey(
-                new ObjectId(sentCommentId),
+                new ObjectId(sentCommentId)
             );
 
             if (!comment) {
@@ -805,9 +817,9 @@ export const dataCommandRepository = {
                     errorsMessages: [
                         {
                             field: "if (!comment) inside dataCommandRepository.deleteCommentById", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                            message: `Internal Server Error`,
-                        },
-                    ],
+                            message: `Internal Server Error`
+                        }
+                    ]
                 } as CustomResult;
             }
 
@@ -819,14 +831,14 @@ export const dataCommandRepository = {
                     errorsMessages: [
                         {
                             field: "if (sentUserId !== comment.commentatorInfo.userId) inside dataCommandRepository.deleteCommentById", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                            message: `User is forbidden to delete another user’s comment`,
-                        },
-                    ],
+                            message: `User is forbidden to delete another user’s comment`
+                        }
+                    ]
                 } as CustomResult;
             }
 
             const res = await commentsCollection.deleteOne({
-                _id: new ObjectId(sentCommentId),
+                _id: new ObjectId(sentCommentId)
             });
 
             if (!res.acknowledged) {
@@ -837,9 +849,9 @@ export const dataCommandRepository = {
                     errorsMessages: [
                         {
                             field: "bloggersCollection.deleteOne inside dataCommandRepository.deleteCommentById", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                            message: `Unknown error while trying to delete comment`,
-                        },
-                    ],
+                            message: `Unknown error while trying to delete comment`
+                        }
+                    ]
                 } as CustomResult;
             }
 
@@ -850,9 +862,9 @@ export const dataCommandRepository = {
                 errorsMessages: [
                     {
                         field: "",
-                        message: "",
-                    },
-                ],
+                        message: ""
+                    }
+                ]
             } as CustomResult;
         } catch (error) {
             return {
@@ -862,9 +874,9 @@ export const dataCommandRepository = {
                 errorsMessages: [
                     {
                         field: "dataCommandRepository.deleteCommentById", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                        message: `Unknown error inside try-catch block: ${JSON.stringify(error)}`,
-                    },
-                ],
+                        message: `Unknown error inside try-catch block: ${JSON.stringify(error)}`
+                    }
+                ]
             } as CustomResult;
         }
     },
@@ -873,11 +885,11 @@ export const dataCommandRepository = {
     // методы для управления регистрацией новых пользователей
     // *****************************
     async registerNewUser(
-        sentNewUser: RegistrationUserInputModel,
+        sentNewUser: RegistrationUserInputModel
     ): Promise<CustomResult> {
         try {
             const passwordHash = await bcryptService.generateHash(
-                sentNewUser.password,
+                sentNewUser.password
             );
 
             if (!passwordHash) {
@@ -888,9 +900,9 @@ export const dataCommandRepository = {
                     errorsMessages: [
                         {
                             field: "bcryptService.generateHash",
-                            message: "Generating hash error",
-                        },
-                    ],
+                            message: "Generating hash error"
+                        }
+                    ]
                 };
             }
 
@@ -910,7 +922,7 @@ export const dataCommandRepository = {
                 sentNewUser.login,
                 sentNewUser.email,
                 passwordHash,
-                tempId,
+                tempId
             );
 
             const result = await usersCollection.insertOne(newUserEntry);
@@ -924,14 +936,34 @@ export const dataCommandRepository = {
                     errorsMessages: [
                         {
                             field: "usersCollection.insertOne(newUserEntry)",
-                            message: "attempt to insert new user entry failed",
-                        },
-                    ],
+                            message: "attempt to insert new user entry failed"
+                        }
+                    ]
                 };
             }
 
-            // здесь отсылка письма
-            // после этого отправка результата что все ОК
+            // здесь отсылка письма. с точки зрения обработки потенциальных ошибок
+            // максимум того что целесообразно сделать, это в том случае если по какой-то причине с нашей стороны чтото сломалось
+            // никак не говорить об этом юзерам, пускай они самостоятельно повторно отправляют запрос, мы максимум логируем ошибку
+            // тут жестко будет связано с политикой компании по этому поводу
+            // так делается чтобы не брать на себя лишней работы, т.к. в случае реальной проблемы с сервисом отправки мы так или иначе будем это чинить
+            // а если письмо просто потерялось или юзер тупит - для нас это может быть куча лишней работы по обслуживанию непонятно чего
+            // так что во втором случае пусть юзер сам лучше на себя возьмет это работу - просто повторно отправит если что запррос, нам главно оптимально подобрать период удалления неподтвержденных данных (минут 15-30)
+
+
+
+            // отправка результата что все ОК
+            return {
+                data: null,
+                statusCode: HttpStatus.NoContent,
+                statusDescription: "",
+                errorsMessages: [
+                    {
+                        field: "",
+                        message: ""
+                    }
+                ]
+            };
         } catch (error) {
             return {
                 data: null,
@@ -940,23 +972,12 @@ export const dataCommandRepository = {
                 errorsMessages: [
                     {
                         field: "",
-                        message: "Unknown error",
-                    },
-                ],
+                        message: "Unknown error"
+                    }
+                ]
             };
         }
 
-        return {
-            data: null,
-            statusCode: HttpStatus.NoContent,
-            statusDescription: "",
-            errorsMessages: [
-                {
-                    field: "",
-                    message: "",
-                },
-            ],
-        };
     },
 
     async findByLoginOrEmail(loginOrEmail: string): Promise<boolean> {
@@ -965,17 +986,17 @@ export const dataCommandRepository = {
                 {
                     $or: [
                         { email: { loginOrEmail } },
-                        { login: { loginOrEmail } },
-                    ],
+                        { login: { loginOrEmail } }
+                    ]
                 },
-                { projection: { _id: 1 } }, // т.к. нам не нужны все данные по юзеру, то оптимизируем - запрашиваем только _id
+                { projection: { _id: 1 } } // т.к. нам не нужны все данные по юзеру, то оптимизируем - запрашиваем только _id
             );
             return !!user;
         } catch (error) {
             // не оптимально, но пока не унифицирован подход к обработке ошибок - оставляем
             console.error(
                 "Internal DB error in dataCommandRepository -> findByLoginOrEmail:",
-                error,
+                error
             );
 
             return false;
@@ -990,5 +1011,5 @@ export const dataCommandRepository = {
         await postsCollection.deleteMany({});
         await usersCollection.deleteMany({});
         await commentsCollection.deleteMany({});
-    },
+    }
 };

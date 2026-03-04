@@ -23,7 +23,9 @@ export class User {
         this.createdAt = new Date();
         this.emailConfirmation = {
             confirmationCode: "",
-            expirationDate: new Date(new Date().setDate(new Date().getMinutes() + 30)),
+            expirationDate: new Date(
+                new Date().setDate(new Date().getMinutes() + 30),
+            ),
             isConfirmed: false,
         };
     }

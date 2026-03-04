@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { inputErrorManagementMiddleware } from "./validation-middleware/error-management-validation-middleware";
-import { loginInputModelValidation } from "./validation-middleware/UserInputModel-validation-middleware";
+import {
+    loginInputModelValidation,
+    userInputModelValidation
+} from "./validation-middleware/UserInputModel-validation-middleware";
 import {
     attemptToLogin,
     provideUserInfo, registrationAttemptByUser
@@ -18,7 +21,7 @@ authRouter.post(
 );
 
 // Registration in the system. Email with confirmation code will be send to passed email address
-authRouter.post("/registration", loginInputModelValidation, inputErrorManagementMiddleware, registrationAttemptByUser);
+authRouter.post("/registration", userInputModelValidation, inputErrorManagementMiddleware, registrationAttemptByUser);
 
 // Get information about current user
 authRouter.get("/me", tokenGuardVerification, provideUserInfo);
