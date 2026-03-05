@@ -11,6 +11,7 @@ import { LoginSuccessViewModel } from "../../adapters/verification/auth-success-
 import { AuthLoginInputModel } from "../router-types/auth-login-input-model";
 import { RegistrationUserInputModel } from "../router-types/auth-registration-input-model";
 import { RegistrationConfirmationInput } from "../router-types/auth-registration-confirmation-input-model";
+import { ResentRegistrationConfirmationInput } from "../router-types/auth-resent-registration-confirmation-input-model";
 
 
 
@@ -63,6 +64,26 @@ export const provideUserInfo = async (
     const userInfo = await dataQueryRepository.findUserForMe(userId);
     return res.status(HttpStatus.Ok)
         .send(userInfo);
+};
+
+export const resendRegistrationConfirmation = async (
+    req: RequestWithBody<ResentRegistrationConfirmationInput>,
+    res: Response
+) => {
+    const resentConfirmationResult: CustomResult = await authService.resendConfirmRegistrationCode(req.body);
+
+    if (resentConfirmationResult.statusCode !== HttpStatus.Ok) {
+        console.error(
+            "Error description: ",
+            resentConfirmationResult?.statusDescription,
+            JSON.stringify(resentConfirmationResult.errorsMessages)
+        );
+
+        return res.status(resentConfirmationResult.statusCode)
+            .send("Error");
+    }
+
+    return res.sendStatus(HttpStatus.NoContent);
 };
 
 

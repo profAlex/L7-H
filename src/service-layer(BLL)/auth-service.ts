@@ -9,6 +9,9 @@ import { LoginSuccessViewModel } from "../adapters/verification/auth-success-log
 import { RegistrationUserInputModel } from "../routers/router-types/auth-registration-input-model";
 import { dataCommandRepository } from "../repository-layers/command-repository-layer/command-repository";
 import { RegistrationConfirmationInput } from "../routers/router-types/auth-registration-confirmation-input-model";
+import {
+    ResentRegistrationConfirmationInput
+} from "../routers/router-types/auth-resent-registration-confirmation-input-model";
 
 
 
@@ -139,11 +142,56 @@ export const authService = {
     },
 
 
+    async resendConfirmRegistrationCode(
+        sentData: ResentRegistrationConfirmationInput
+    ): Promise<CustomResult> {
+        try {
+
+            const isUserInDatabase = await dataCommandRepository.findNotConfirmedByEmail(sentData.email);
+
+            if (!isUserInDatabase) {
+                return {
+                    data: null,
+                    statusCode: HttpStatus.BadRequest,
+                    statusDescription:
+                        "authService -> resendConfirmRegistrationCode -> if (isUserInDatabase)",
+                    errorsMessages: [
+                        {
+                            field: "",
+                            message: "Email doesn't exist or already confirmed"
+                        }
+                    ]
+                };
+            }
+
+            return await dataCommandRepository.resendConfirmRegistrationCode(sentData, isUserInDatabase);
+
+        } catch (error) {
+            return {
+                data: null,
+                statusCode: HttpStatus.InternalServerError,
+                statusDescription:
+                    "Unknown error in authService -> resendConfirmRegistrationCode",
+                errorsMessages: [
+                    {
+                        field: "",
+                        message: "Unknown error"
+                    }
+                ]
+            };
+        }
+
+    },
+
+
     // вспомогательная функция
     async checkUserCredentials(
         password: string,
         passwordHash: string
     ): Promise<boolean | null> {
-        return bcryptService.checkPassword(password, passwordHash);
+        return bcryptService.checkPassword(
+            password,
+            passwordHash
+        );
     }
 };

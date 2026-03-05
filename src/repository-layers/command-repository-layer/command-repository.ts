@@ -22,6 +22,10 @@ import { User } from "../../common/classes/user-class";
 import { RegistrationUserInputModel } from "../../routers/router-types/auth-registration-input-model";
 import { emailExamples, mailerService } from "../../adapters/email-sender/mailer-service";
 import { RegistrationConfirmationInput } from "../../routers/router-types/auth-registration-confirmation-input-model";
+import {
+    ResentRegistrationConfirmationInput
+} from "../../routers/router-types/auth-resent-registration-confirmation-input-model";
+import { randomUUID } from "node:crypto";
 
 
 
@@ -1031,7 +1035,7 @@ export const dataCommandRepository = {
                     statusDescription: "",
                     errorsMessages: [
                         {
-                            field: "usersCollection.insertOne(newUserEntry)",
+                            field: "dataCommandRepository -> registerNewUser -> usersCollection.insertOne(newUserEntry)",
                             message: "attempt to insert new user entry failed"
                         }
                     ]
@@ -1056,8 +1060,8 @@ export const dataCommandRepository = {
 
             let status = "Sending went without problems, awaiting confirmation form user";
             if (!sendingResult) {
-                console.error("Something went wrong during the sending the registration email");
-                status = "Something went wrong during the sending the registration email";
+                console.error("Something went wrong while sending the registration email");
+                status = "Something went wrong while sending the registration email";
             }
 
             // отправка результата что все ОК
@@ -1076,7 +1080,7 @@ export const dataCommandRepository = {
             return {
                 data: null,
                 statusCode: HttpStatus.InternalServerError,
-                statusDescription: "usersCollection.insertOne(newUserEntry)",
+                statusDescription: "dataCommandRepository -> registerNewUser -> usersCollection.insertOne(newUserEntry)",
                 errorsMessages: [
                     {
                         field: "",
@@ -1088,17 +1092,125 @@ export const dataCommandRepository = {
 
     },
 
+
+    async resendConfirmRegistrationCode(
+        sentEmailData: ResentRegistrationConfirmationInput,
+        userId: ObjectId
+    ): Promise<CustomResult> {
+        try {
+
+            const userEntry = await usersCollection.findOne({ userId });
+
+            if (!userEntry) {
+                return {
+                    data: null,
+                    statusCode: HttpStatus.InternalServerError,
+                    statusDescription: "",
+                    errorsMessages: [
+                        {
+                            field: "resendConfirmRegistrationCode -> usersCollection.findOne({ userId })",
+                            message: "User not found"
+                        }
+                    ]
+                };
+            }
+
+            const newConfirmationCode = randomUUID();
+            // userEntry.emailConfirmation.confirmationCode = newConfirmationCode;
+            // userEntry.emailConfirmation.expirationDate = new Date(new Date().setMinutes(new Date().getMinutes() + 30));
+
+
+            // const result = await usersCollection.insertOne(newUserEntry);
+            // newUserEntry.emailConfirmation.isConfirmed = true; // для созданных админом пользователей подтверждения не нужно
+
+            const result = await usersCollection.updateOne(
+                { _id: userId },
+                {
+                    $set: {
+                        "emailConfirmation.confirmationCode": newConfirmationCode,
+                        "emailConfirmation.expirationDate": new Date(new Date().setDate(new Date().getMinutes() + 30))
+                    }
+                }
+            );
+
+            if (!result.acknowledged) {
+                return {
+                    data: null,
+                    statusCode: HttpStatus.InternalServerError,
+                    statusDescription: "",
+                    errorsMessages: [
+                        {
+                            field: "dataCommandRepository -> resendConfirmRegistrationCode -> usersCollection.updateOne",
+                            message: "attempt to update user entry failed"
+                        }
+                    ]
+                };
+            }
+
+            // здесь отсылка письма. с точки зрения обработки потенциальных ошибок
+            // максимум того что целесообразно сделать, это в том случае если по какой-то причине с нашей стороны чтото сломалось
+            // никак не говорить об этом юзерам, пускай они самостоятельно повторно отправляют запрос, мы максимум логируем ошибку
+            // тут жестко будет связано с политикой компании по этому поводу
+            // так делается чтобы не брать на себя лишней работы, т.к. в случае реальной проблемы с сервисом отправки мы так или иначе будем это чинить
+            // а если письмо просто потерялось или юзер тупит - для нас это может быть куча лишней работы по обслуживанию непонятно чего
+            // так что во втором случае пусть юзер сам лучше на себя возьмет это работу - просто повторно отправит если что запррос, нам главно оптимально подобрать период удалления неподтвержденных данных (минут 15-30)
+
+            const resendingResult = await mailerService.sendConfirmationRegisterEmail(
+                "\"Alex St\" <geniusb198@yandex.ru>",
+                sentEmailData.email,
+                newConfirmationCode,
+                emailExamples.registrationEmail
+            );
+
+            let status = "Resending went without problems, awaiting confirmation form user";
+            if (!resendingResult) {
+                console.error("Something went while resending the registration email");
+                status = "Something went wrong while resending the registration email";
+            }
+
+            // отправка результата что все ОК
+            return {
+                data: null,
+                statusCode: HttpStatus.NoContent,
+                statusDescription: status,
+                errorsMessages: [
+                    {
+                        field: "",
+                        message: ""
+                    }
+                ]
+            };
+        } catch (error) {
+            return {
+                data: null,
+                statusCode: HttpStatus.InternalServerError,
+                statusDescription: "dataCommandRepository -> resendConfirmRegistrationCode -> usersCollection.updateOne",
+                errorsMessages: [
+                    {
+                        field: "",
+                        message: "Unknown error"
+                    }
+                ]
+            };
+        }
+
+    },
+
+
     async findByLoginOrEmail(loginOrEmail: string): Promise<boolean> {
         try {
             const user = await usersCollection.findOne(
                 {
+                    //"emailConfirmation.isConfirmed": false,
                     $or: [
-                        { email: { loginOrEmail } },
-                        { login: { loginOrEmail } }
+                        { email: loginOrEmail },
+                        { login: loginOrEmail }
                     ]
                 },
-                { projection: { _id: 1 } } // т.к. нам не нужны все данные по юзеру, то оптимизируем - запрашиваем только _id
+                // т.к. нам не нужны все данные по юзеру, то оптимизируем - запрашиваем только _id
+                { projection: { _id: 1 } }
             );
+
             return !!user;
         } catch (error) {
             // не оптимально, но пока не унифицирован подход к обработке ошибок - оставляем
@@ -1108,6 +1220,31 @@ export const dataCommandRepository = {
             );
 
             return false;
+        }
+    },
+
+
+    async findNotConfirmedByEmail(email: string): Promise<ObjectId | null> {
+        try {
+            const user = await usersCollection.findOne<{ _id: ObjectId }>(
+                {
+                    "emailConfirmation.isConfirmed": false,
+                    email: email
+
+                },
+                { projection: { _id: 1 } } // т.к. нам не нужны все данные по юзеру, то оптимизируем - запрашиваем только _id
+            );
+
+            return user ? user._id : null;
+
+        } catch (error) {
+            // не оптимально, но пока не унифицирован подход к обработке ошибок - оставляем
+            console.error(
+                "Internal DB error in dataCommandRepository -> findNotConfirmedByEmail:",
+                error
+            );
+
+            return null;
         }
     },
 

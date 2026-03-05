@@ -24,7 +24,7 @@ export class User {
         this.emailConfirmation = {
             confirmationCode: randomUUID(),
             expirationDate: new Date(
-                new Date().setDate(new Date().getMinutes() + 30),
+                new Date().setMinutes(new Date().getMinutes() + 30),
             ),
             isConfirmed: false,
         };

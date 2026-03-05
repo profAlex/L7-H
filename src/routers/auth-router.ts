@@ -6,10 +6,13 @@ import {
 } from "./validation-middleware/UserInputModel-validation-middleware";
 import {
     attemptToLogin,
-    provideUserInfo, registrationAttemptByUser, registrationConfirmation
+    provideUserInfo, registrationAttemptByUser, registrationConfirmation, resendRegistrationConfirmation
 } from "./router-handlers/auth-router-description";
 import { tokenGuardVerification } from "./guard-middleware/token-guard";
-import { registrationConfirmationValidator } from "./validation-middleware/auth-router-general-middleware-validator";
+import {
+    registrationConfirmationValidator,
+    registrationResentConfirmationValidator
+} from "./validation-middleware/auth-router-general-middleware-validator";
 
 
 
@@ -23,6 +26,7 @@ authRouter.post(
     attemptToLogin
 );
 
+// Confirm registration
 authRouter.post(
     "/registration-confirmation",
     registrationConfirmationValidator,
@@ -36,6 +40,14 @@ authRouter.post(
     userInputModelValidation,
     inputErrorManagementMiddleware,
     registrationAttemptByUser
+);
+
+// Resend Registration confirmation email
+authRouter.post(
+    "/registration-email-resending",
+    registrationResentConfirmationValidator,
+    inputErrorManagementMiddleware,
+    resendRegistrationConfirmation
 );
 
 // Get information about current user
