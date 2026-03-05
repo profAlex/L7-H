@@ -24,7 +24,7 @@ authRouter.post(
 );
 
 authRouter.post(
-    "/registration-confirmation)",
+    "/registration-confirmation",
     registrationConfirmationValidator,
     inputErrorManagementMiddleware,
     registrationConfirmation

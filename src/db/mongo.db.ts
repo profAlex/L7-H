@@ -4,6 +4,7 @@ import { PostViewModel } from "../routers/router-types/post-view-model";
 import { UserCollectionStorageModel } from "../routers/router-types/user-storage-model";
 import { CommentStorageModel } from "../routers/router-types/comment-storage-model";
 
+
 const DB_NAME = "bloggers_db";
 export const BLOGGERS_COLLECTION_NAME = "bloggers_collection";
 export const POSTS_COLLECTION_NAME = "posts_collection";
@@ -21,18 +22,16 @@ export let postsCollection: Collection<PostViewModel>;
 export let usersCollection: Collection<UserCollectionStorageModel>;
 export let commentsCollection: Collection<CommentStorageModel>;
 
+
+
 export async function runDB() {
     client = new MongoClient(URI);
     db = client.db(DB_NAME);
 
     bloggersCollection = db.collection<BlogViewModel>(BLOGGERS_COLLECTION_NAME);
     postsCollection = db.collection<PostViewModel>(POSTS_COLLECTION_NAME);
-    usersCollection = db.collection<UserCollectionStorageModel>(
-        USERS_COLLECTION_NAME,
-    );
-    commentsCollection = db.collection<CommentStorageModel>(
-        COMMENTS_COLLECTION_NAME,
-    );
+    usersCollection = db.collection<UserCollectionStorageModel>(USERS_COLLECTION_NAME);
+    commentsCollection = db.collection<CommentStorageModel>(COMMENTS_COLLECTION_NAME);
 
     try {
         await client.connect();
@@ -43,6 +42,8 @@ export async function runDB() {
         throw new Error(`Database not connected: ${error}`);
     }
 }
+
+
 
 export async function closeDB() {
     try {
@@ -57,5 +58,7 @@ export async function closeDB() {
         console.error("Error: ", error);
     }
 }
+
+
 
 export { db };

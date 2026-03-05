@@ -239,7 +239,7 @@ export const dataCommandRepository = {
     async getAllPosts(): Promise<PostViewModel[] | []> {
         const tempContainer: PostCollectionStorageModel[] | [] =
             await postsCollection.find({})
-            .toArray();
+                .toArray();
 
         return tempContainer.map((value: PostCollectionStorageModel) => ({
             id: value._id.toString(),
@@ -884,6 +884,7 @@ export const dataCommandRepository = {
         }
     },
 
+
     // *****************************
     // методы для управления регистрацией новых пользователей
     // *****************************
@@ -893,20 +894,20 @@ export const dataCommandRepository = {
         try {
 
             const searchResult = await usersCollection.aggregate([
-                {
-                    $match: {
-                        "emailConfirmation.confirmationCode": sentConfirmationCode.code,
-                        "emailConfirmation.expirationDate": { $gt: new Date() },
-                        "emailConfirmation.isConfirmed": false
+                    {
+                        $match: {
+                            "emailConfirmation.confirmationCode": sentConfirmationCode.code,
+                            "emailConfirmation.expirationDate": { $gt: new Date() },
+                            "emailConfirmation.isConfirmed": false
+                        }
+                    },
+                    {
+                        $project: {
+                            _id: 1
+                        }
                     }
-                },
-                {
-                    $project: {
-                        _id: 1
-                    }
-                }
-            ])
-            .toArray();
+                ])
+                .toArray();
 
 
             // aggregate() всегда возвращает массив.

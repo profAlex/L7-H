@@ -59,6 +59,7 @@ const createNewUser = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
     if (insertedId) {
         // а вот здесь уже идем в query repo с айдишником который нам вернул command repo
+        // ЭТО НАДО ЧЕРЕЗ СЕРВИС ВЫЗЫВАТЬ А НЕ НАПРЯМУЮ! ЕСЛИ ЕТЬ СЛОЙ СЕРВИС ДЛЯ РОУТА, ТО ЧЕРЕЗ НЕГО ВСЕГДА ХОДИМ
         const result = yield query_repository_1.dataQueryRepository.findSingleUser(insertedId);
         if (result) {
             res.status(http_statuses_1.HttpStatus.Created).json(result);

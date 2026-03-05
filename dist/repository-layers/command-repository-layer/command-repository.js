@@ -15,6 +15,8 @@ const mongodb_1 = require("mongodb");
 const custom_error_class_1 = require("../utility/custom-error-class");
 const bcrypt_service_1 = require("../../adapters/authentication/bcrypt-service");
 const http_statuses_1 = require("../../common/http-statuses/http-statuses");
+const user_class_1 = require("../../common/classes/user-class");
+const mailer_service_1 = require("../../adapters/email-sender/mailer-service");
 function findBlogByPrimaryKey(id) {
     return __awaiter(this, void 0, void 0, function* () {
         return mongo_db_1.bloggersCollection.findOne({ _id: id });
@@ -49,8 +51,8 @@ exports.dataCommandRepository = {
                     throw new custom_error_class_1.CustomError({
                         errorMessage: {
                             field: "bloggersCollection.insertOne(newBlogEntry)",
-                            message: "attempt to insert new blog entry failed",
-                        },
+                            message: "attempt to insert new blog entry failed"
+                        }
                     });
                 }
                 return result.insertedId.toString();
@@ -84,8 +86,8 @@ exports.dataCommandRepository = {
                         throw new custom_error_class_1.CustomError({
                             errorMessage: {
                                 field: "bloggersCollection.updateOne",
-                                message: "attempt to update blog entry failed",
-                            },
+                                message: "attempt to update blog entry failed"
+                            }
                         });
                     }
                     if (res.matchedCount === 1) {
@@ -97,8 +99,8 @@ exports.dataCommandRepository = {
                     throw new custom_error_class_1.CustomError({
                         errorMessage: {
                             field: "ObjectId.isValid(blogId)",
-                            message: "invalid blog ID",
-                        },
+                            message: "invalid blog ID"
+                        }
                     });
                 }
             }
@@ -126,14 +128,14 @@ exports.dataCommandRepository = {
                 if (mongodb_1.ObjectId.isValid(blogId)) {
                     const idToCheck = new mongodb_1.ObjectId(blogId);
                     const res = yield mongo_db_1.bloggersCollection.deleteOne({
-                        _id: idToCheck,
+                        _id: idToCheck
                     });
                     if (!res.acknowledged) {
                         throw new custom_error_class_1.CustomError({
                             errorMessage: {
                                 field: "bloggersCollection.deleteOne",
-                                message: "attempt to delete blog entry failed",
-                            },
+                                message: "attempt to delete blog entry failed"
+                            }
                         });
                     }
                     if (res.deletedCount === 1) {
@@ -168,7 +170,8 @@ exports.dataCommandRepository = {
     // *****************************
     getAllPosts() {
         return __awaiter(this, void 0, void 0, function* () {
-            const tempContainer = yield mongo_db_1.postsCollection.find({}).toArray();
+            const tempContainer = yield mongo_db_1.postsCollection.find({})
+                .toArray();
             return tempContainer.map((value) => ({
                 id: value._id.toString(),
                 title: value.title,
@@ -176,7 +179,7 @@ exports.dataCommandRepository = {
                 content: value.content,
                 blogId: value.blogId,
                 blogName: value.blogName,
-                createdAt: value.createdAt,
+                createdAt: value.createdAt
             }));
             // _id: ObjectId,
             // id: string;
@@ -201,8 +204,8 @@ exports.dataCommandRepository = {
                             throw new custom_error_class_1.CustomError({
                                 errorMessage: {
                                     field: "postsCollection.insertOne(newPostEntry)",
-                                    message: "attempt to insert new post entry failed",
-                                },
+                                    message: "attempt to insert new post entry failed"
+                                }
                             });
                         }
                         return result.insertedId.toString();
@@ -211,8 +214,8 @@ exports.dataCommandRepository = {
                         throw new custom_error_class_1.CustomError({
                             errorMessage: {
                                 field: "findBlogByPrimaryKey(new ObjectId(newPost.blogId))",
-                                message: "attempt to find blogger failed",
-                            },
+                                message: "attempt to find blogger failed"
+                            }
                         });
                     }
                 }
@@ -220,8 +223,8 @@ exports.dataCommandRepository = {
                     throw new custom_error_class_1.CustomError({
                         errorMessage: {
                             field: "ObjectId.isValid(newPost.blogId)",
-                            message: "invalid blogId",
-                        },
+                            message: "invalid blogId"
+                        }
                     });
                 }
             }
@@ -257,8 +260,8 @@ exports.dataCommandRepository = {
                             throw new custom_error_class_1.CustomError({
                                 errorMessage: {
                                     field: "postsCollection.insertOne(newPostEntry)",
-                                    message: "attempt to insert new post entry failed",
-                                },
+                                    message: "attempt to insert new post entry failed"
+                                }
                             });
                         }
                         return result.insertedId.toString();
@@ -294,8 +297,8 @@ exports.dataCommandRepository = {
                         throw new custom_error_class_1.CustomError({
                             errorMessage: {
                                 field: "postsCollection.updateOne",
-                                message: "attempt to update post entry failed",
-                            },
+                                message: "attempt to update post entry failed"
+                            }
                         });
                     }
                     if (res.matchedCount === 1) {
@@ -307,8 +310,8 @@ exports.dataCommandRepository = {
                     throw new custom_error_class_1.CustomError({
                         errorMessage: {
                             field: "ObjectId.isValid(postId)",
-                            message: "invalid post ID",
-                        },
+                            message: "invalid post ID"
+                        }
                     });
                 }
             }
@@ -341,8 +344,8 @@ exports.dataCommandRepository = {
                         throw new custom_error_class_1.CustomError({
                             errorMessage: {
                                 field: "postsCollection.deleteOne",
-                                message: "attempt to delete post entry failed",
-                            },
+                                message: "attempt to delete post entry failed"
+                            }
                         });
                     }
                     if (res.deletedCount === 1) {
@@ -353,8 +356,8 @@ exports.dataCommandRepository = {
                     throw new custom_error_class_1.CustomError({
                         errorMessage: {
                             field: "ObjectId.isValid(postId)",
-                            message: "invalid post ID",
-                        },
+                            message: "invalid post ID"
+                        }
                     });
                 }
             }
@@ -384,22 +387,33 @@ exports.dataCommandRepository = {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const passwordHash = yield bcrypt_service_1.bcryptService.generateHash(sentNewUser.password);
+                if (!passwordHash) {
+                    throw new custom_error_class_1.CustomError({
+                        errorMessage: {
+                            field: "bcryptService.generateHash",
+                            message: "Generating hash error"
+                        }
+                    });
+                }
                 const tempId = new mongodb_1.ObjectId();
-                const newUserEntry = {
-                    _id: tempId,
-                    id: tempId.toString(),
-                    login: sentNewUser.login,
-                    email: sentNewUser.email,
-                    passwordHash: passwordHash,
-                    createdAt: new Date(),
-                };
+                // нижеследующее заменили на инициализацию через клас User через extend interface UserCollectionStorageModel
+                // const newUserEntry = {
+                //     _id: tempId,
+                //     id: tempId.toString(),
+                //     login: sentNewUser.login,
+                //     email: sentNewUser.email,
+                //     passwordHash: passwordHash,
+                //     createdAt: new Date(),
+                // } as UserCollectionStorageModel;
+                const newUserEntry = new user_class_1.User(sentNewUser.login, sentNewUser.email, passwordHash, tempId);
+                newUserEntry.emailConfirmation.isConfirmed = true; // для созданных админом пользователей подтверждения не нужно
                 const result = yield mongo_db_1.usersCollection.insertOne(newUserEntry);
                 if (!result.acknowledged) {
                     throw new custom_error_class_1.CustomError({
                         errorMessage: {
                             field: "usersCollection.insertOne(newUserEntry)",
-                            message: "attempt to insert new user entry failed",
-                        },
+                            message: "attempt to insert new user entry failed"
+                        }
                     });
                 }
                 return result.insertedId.toString();
@@ -432,8 +446,8 @@ exports.dataCommandRepository = {
                         throw new custom_error_class_1.CustomError({
                             errorMessage: {
                                 field: "usersCollection.deleteOne",
-                                message: "attempt to delete user entry failed",
-                            },
+                                message: "attempt to delete user entry failed"
+                            }
                         });
                     }
                     if (res.deletedCount === 1) {
@@ -481,9 +495,9 @@ exports.dataCommandRepository = {
                             errorsMessages: [
                                 {
                                     field: "dataCommandRepository.createNewComment -> findUserByPrimaryKey(new ObjectId(userId))", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                                    message: "Couldn't find User record", // ошибкам надо присваивать кода, чтобы пользователи могли сообщать номер ошибки в техподдержку
-                                },
-                            ],
+                                    message: "Couldn't find User record" // ошибкам надо присваивать кода, чтобы пользователи могли сообщать номер ошибки в техподдержку
+                                }
+                            ]
                         };
                     }
                     const userLogin = user.login;
@@ -495,7 +509,7 @@ exports.dataCommandRepository = {
                         relatedPostId: postId,
                         content: content,
                         commentatorInfo: { userId: userId, userLogin: userLogin },
-                        createdAt: new Date(),
+                        createdAt: new Date()
                     };
                     const result = yield mongo_db_1.commentsCollection.insertOne(newCommentEntry);
                     if (!result.acknowledged) {
@@ -506,9 +520,9 @@ exports.dataCommandRepository = {
                             errorsMessages: [
                                 {
                                     field: "dataCommandRepository.createNewComment -> commentsCollection.insertOne(newCommentEntry)", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                                    message: "Error while inserting new comment",
-                                },
-                            ],
+                                    message: "Error while inserting new comment"
+                                }
+                            ]
                         };
                     }
                     return {
@@ -516,15 +530,15 @@ exports.dataCommandRepository = {
                             id: newCommentEntry.id,
                             content: newCommentEntry.content,
                             commentatorInfo: newCommentEntry.commentatorInfo,
-                            createdAt: newCommentEntry.createdAt,
+                            createdAt: newCommentEntry.createdAt
                         },
                         statusCode: http_statuses_1.HttpStatus.Created,
                         errorsMessages: [
                             {
                                 field: null,
-                                message: null,
-                            },
-                        ],
+                                message: null
+                            }
+                        ]
                     };
                 }
                 else {
@@ -535,9 +549,9 @@ exports.dataCommandRepository = {
                         errorsMessages: [
                             {
                                 field: "dataCommandRepository.createNewComment -> if (ObjectId.isValid(userId) && ObjectId.isValid(postId))", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                                message: "User ID or Post ID have invalid format",
-                            },
-                        ],
+                                message: "User ID or Post ID have invalid format"
+                            }
+                        ]
                     };
                 }
             }
@@ -551,9 +565,9 @@ exports.dataCommandRepository = {
                     errorsMessages: [
                         {
                             field: "dataCommandRepository.createNewComment", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                            message: `Unknown error inside try-catch block: ${JSON.stringify(error)}`,
-                        },
-                    ],
+                            message: `Unknown error inside try-catch block: ${JSON.stringify(error)}`
+                        }
+                    ]
                 };
             }
         });
@@ -570,9 +584,9 @@ exports.dataCommandRepository = {
                         errorsMessages: [
                             {
                                 field: "if (!comment) inside dataCommandRepository.updateCommentById", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                                message: `Internal Server Error`,
-                            },
-                        ],
+                                message: `Internal Server Error`
+                            }
+                        ]
                     };
                 }
                 if (sentUserId !== comment.commentatorInfo.userId) {
@@ -583,9 +597,9 @@ exports.dataCommandRepository = {
                         errorsMessages: [
                             {
                                 field: "if (sentUserId !== comment.commentatorInfo.userId) inside dataCommandRepository.updateCommentById", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                                message: `User is forbidden to change another user’s comment`,
-                            },
-                        ],
+                                message: `User is forbidden to change another user’s comment`
+                            }
+                        ]
                     };
                 }
                 const res = yield mongo_db_1.commentsCollection.updateOne({ _id: new mongodb_1.ObjectId(sentCommentId) }, { $set: { content: sentContent.content } });
@@ -597,9 +611,9 @@ exports.dataCommandRepository = {
                         errorsMessages: [
                             {
                                 field: "bloggersCollection.updateOne inside dataCommandRepository.updateCommentById", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                                message: `Unknown error while trying to update comment`,
-                            },
-                        ],
+                                message: `Unknown error while trying to update comment`
+                            }
+                        ]
                     };
                 }
                 return {
@@ -609,9 +623,9 @@ exports.dataCommandRepository = {
                     errorsMessages: [
                         {
                             field: "",
-                            message: "",
-                        },
-                    ],
+                            message: ""
+                        }
+                    ]
                 };
             }
             catch (error) {
@@ -622,9 +636,9 @@ exports.dataCommandRepository = {
                     errorsMessages: [
                         {
                             field: "dataCommandRepository.updateCommentById", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                            message: `Unknown error inside try-catch block: ${JSON.stringify(error)}`,
-                        },
-                    ],
+                            message: `Unknown error inside try-catch block: ${JSON.stringify(error)}`
+                        }
+                    ]
                 };
             }
         });
@@ -641,9 +655,9 @@ exports.dataCommandRepository = {
                         errorsMessages: [
                             {
                                 field: "if (!comment) inside dataCommandRepository.deleteCommentById", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                                message: `Internal Server Error`,
-                            },
-                        ],
+                                message: `Internal Server Error`
+                            }
+                        ]
                     };
                 }
                 if (sentUserId !== comment.commentatorInfo.userId) {
@@ -654,13 +668,13 @@ exports.dataCommandRepository = {
                         errorsMessages: [
                             {
                                 field: "if (sentUserId !== comment.commentatorInfo.userId) inside dataCommandRepository.deleteCommentById", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                                message: `User is forbidden to delete another user’s comment`,
-                            },
-                        ],
+                                message: `User is forbidden to delete another user’s comment`
+                            }
+                        ]
                     };
                 }
                 const res = yield mongo_db_1.commentsCollection.deleteOne({
-                    _id: new mongodb_1.ObjectId(sentCommentId),
+                    _id: new mongodb_1.ObjectId(sentCommentId)
                 });
                 if (!res.acknowledged) {
                     return {
@@ -670,9 +684,9 @@ exports.dataCommandRepository = {
                         errorsMessages: [
                             {
                                 field: "bloggersCollection.deleteOne inside dataCommandRepository.deleteCommentById", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                                message: `Unknown error while trying to delete comment`,
-                            },
-                        ],
+                                message: `Unknown error while trying to delete comment`
+                            }
+                        ]
                     };
                 }
                 return {
@@ -682,9 +696,9 @@ exports.dataCommandRepository = {
                     errorsMessages: [
                         {
                             field: "",
-                            message: "",
-                        },
-                    ],
+                            message: ""
+                        }
+                    ]
                 };
             }
             catch (error) {
@@ -695,10 +709,198 @@ exports.dataCommandRepository = {
                     errorsMessages: [
                         {
                             field: "dataCommandRepository.deleteCommentById", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                            message: `Unknown error inside try-catch block: ${JSON.stringify(error)}`,
-                        },
-                    ],
+                            message: `Unknown error inside try-catch block: ${JSON.stringify(error)}`
+                        }
+                    ]
                 };
+            }
+        });
+    },
+    // *****************************
+    // методы для управления регистрацией новых пользователей
+    // *****************************
+    confirmRegistrationCode(sentConfirmationCode) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const searchResult = yield mongo_db_1.usersCollection.aggregate([
+                    {
+                        $match: {
+                            "emailConfirmation.confirmationCode": sentConfirmationCode.code,
+                            "emailConfirmation.expirationDate": { $gt: new Date() },
+                            "emailConfirmation.isConfirmed": false
+                        }
+                    },
+                    {
+                        $project: {
+                            _id: 1
+                        }
+                    }
+                ])
+                    .toArray();
+                // aggregate() всегда возвращает массив.
+                if (searchResult.length === 1) {
+                    const updateResult = yield mongo_db_1.usersCollection.updateOne({ _id: searchResult[0] }, {
+                        $set: {
+                            "emailConfirmation.confirmationCode": null,
+                            "emailConfirmation.isConfirmed": true
+                        }
+                    });
+                    if (updateResult.modifiedCount === 1) {
+                        return {
+                            data: null,
+                            statusCode: http_statuses_1.HttpStatus.NoContent,
+                            statusDescription: "Successfully confirmed user",
+                            errorsMessages: [
+                                {
+                                    field: "",
+                                    message: ""
+                                }
+                            ]
+                        };
+                    }
+                    // не смогли обновить юзера
+                    return {
+                        data: null,
+                        statusCode: http_statuses_1.HttpStatus.InternalServerError,
+                        statusDescription: "Couldn't confirm user: dataCommandRepository -> confirmRegistrationCode",
+                        errorsMessages: [
+                            {
+                                field: "",
+                                message: "Couldn't confirm user"
+                            }
+                        ]
+                    };
+                }
+                // юзер не был найден или просрочен
+                return {
+                    data: null,
+                    statusCode: http_statuses_1.HttpStatus.BadRequest,
+                    statusDescription: "Couldn't confirm user: dataCommandRepository -> confirmRegistrationCode",
+                    errorsMessages: [
+                        {
+                            field: "",
+                            message: "Couldn't confirm user - not existent or out of date"
+                        }
+                    ]
+                };
+            }
+            catch (error) {
+                // непредвиденная ошибка
+                return {
+                    data: null,
+                    statusCode: http_statuses_1.HttpStatus.InternalServerError,
+                    statusDescription: "dataCommandRepository -> confirmRegistrationCode",
+                    errorsMessages: [
+                        {
+                            field: "",
+                            message: "Unknown error"
+                        }
+                    ]
+                };
+            }
+        });
+    },
+    registerNewUser(sentNewUser) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const passwordHash = yield bcrypt_service_1.bcryptService.generateHash(sentNewUser.password);
+                if (!passwordHash) {
+                    return {
+                        data: null,
+                        statusCode: http_statuses_1.HttpStatus.InternalServerError,
+                        statusDescription: "",
+                        errorsMessages: [
+                            {
+                                field: "bcryptService.generateHash",
+                                message: "Generating hash error"
+                            }
+                        ]
+                    };
+                }
+                const tempId = new mongodb_1.ObjectId();
+                // нижеследующее заменили на инициализацию через клас User через extend interface UserCollectionStorageModel
+                // const newUserEntry = {
+                //     _id: tempId,
+                //     id: tempId.toString(),
+                //     login: sentNewUser.login,
+                //     email: sentNewUser.email,
+                //     passwordHash: passwordHash,
+                //     createdAt: new Date(),
+                // } as UserCollectionStorageModel;
+                const newUserEntry = new user_class_1.User(sentNewUser.login, sentNewUser.email, passwordHash, tempId);
+                const result = yield mongo_db_1.usersCollection.insertOne(newUserEntry);
+                // newUserEntry.emailConfirmation.isConfirmed = true; // для созданных админом пользователей подтверждения не нужно
+                if (!result.acknowledged) {
+                    return {
+                        data: null,
+                        statusCode: http_statuses_1.HttpStatus.InternalServerError,
+                        statusDescription: "",
+                        errorsMessages: [
+                            {
+                                field: "usersCollection.insertOne(newUserEntry)",
+                                message: "attempt to insert new user entry failed"
+                            }
+                        ]
+                    };
+                }
+                // регистрационный код генерируется внутри инстанса юзера, при его создании
+                // здесь отсылка письма. с точки зрения обработки потенциальных ошибок
+                // максимум того что целесообразно сделать, это в том случае если по какой-то причине с нашей стороны чтото сломалось
+                // никак не говорить об этом юзерам, пускай они самостоятельно повторно отправляют запрос, мы максимум логируем ошибку
+                // тут жестко будет связано с политикой компании по этому поводу
+                // так делается чтобы не брать на себя лишней работы, т.к. в случае реальной проблемы с сервисом отправки мы так или иначе будем это чинить
+                // а если письмо просто потерялось или юзер тупит - для нас это может быть куча лишней работы по обслуживанию непонятно чего
+                // так что во втором случае пусть юзер сам лучше на себя возьмет это работу - просто повторно отправит если что запррос, нам главно оптимально подобрать период удалления неподтвержденных данных (минут 15-30)
+                const sendingResult = yield mailer_service_1.mailerService.sendConfirmationRegisterEmail("\"Alex St\" <geniusb198@yandex.ru>", newUserEntry.email, newUserEntry.emailConfirmation.confirmationCode, mailer_service_1.emailExamples.registrationEmail);
+                let status = "Sending went without problems, awaiting confirmation form user";
+                if (!sendingResult) {
+                    console.error("Something went wrong during the sending the registration email");
+                    status = "Something went wrong during the sending the registration email";
+                }
+                // отправка результата что все ОК
+                return {
+                    data: null,
+                    statusCode: http_statuses_1.HttpStatus.NoContent,
+                    statusDescription: status,
+                    errorsMessages: [
+                        {
+                            field: "",
+                            message: ""
+                        }
+                    ]
+                };
+            }
+            catch (error) {
+                return {
+                    data: null,
+                    statusCode: http_statuses_1.HttpStatus.InternalServerError,
+                    statusDescription: "usersCollection.insertOne(newUserEntry)",
+                    errorsMessages: [
+                        {
+                            field: "",
+                            message: "Unknown error"
+                        }
+                    ]
+                };
+            }
+        });
+    },
+    findByLoginOrEmail(loginOrEmail) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const user = yield mongo_db_1.usersCollection.findOne({
+                    $or: [
+                        { email: { loginOrEmail } },
+                        { login: { loginOrEmail } }
+                    ]
+                }, { projection: { _id: 1 } } // т.к. нам не нужны все данные по юзеру, то оптимизируем - запрашиваем только _id
+                );
+                return !!user;
+            }
+            catch (error) {
+                // не оптимально, но пока не унифицирован подход к обработке ошибок - оставляем
+                console.error("Internal DB error in dataCommandRepository -> findByLoginOrEmail:", error);
+                return false;
             }
         });
     },
@@ -712,5 +914,5 @@ exports.dataCommandRepository = {
             yield mongo_db_1.usersCollection.deleteMany({});
             yield mongo_db_1.commentsCollection.deleteMany({});
         });
-    },
+    }
 };
