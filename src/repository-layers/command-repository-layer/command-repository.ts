@@ -7,23 +7,21 @@ import {
     postsCollection,
     usersCollection
 } from "../../db/mongo.db";
-import { ObjectId, WithId } from "mongodb";
+import { ObjectId } from "mongodb";
 import { BlogPostInputModel } from "../../routers/router-types/blog-post-input-model";
 import { CustomError } from "../utility/custom-error-class";
 import { UserInputModel } from "../../routers/router-types/user-input-model";
-import { UserViewModel } from "../../routers/router-types/user-view-model";
 import { bcryptService } from "../../adapters/authentication/bcrypt-service";
 import { UserCollectionStorageModel } from "../../routers/router-types/user-storage-model";
 import { CommentViewModel } from "../../routers/router-types/comment-view-model";
 import { CustomResult } from "../../common/result-type/result-type";
-import { token } from "../../adapters/verification/token-type";
 import { HttpStatus } from "../../common/http-statuses/http-statuses";
 import { CommentStorageModel } from "../../routers/router-types/comment-storage-model";
 import { CommentInputModel } from "../../routers/router-types/comment-input-model";
 import { User } from "../../common/classes/user-class";
 import { RegistrationUserInputModel } from "../../routers/router-types/auth-registration-input-model";
-import nodemailer from "nodemailer";
 import { emailExamples, mailerService } from "../../adapters/email-sender/mailer-service";
+import { RegistrationConfirmationInput } from "../../routers/router-types/auth-registration-confirmation-input-model";
 
 
 
@@ -240,7 +238,8 @@ export const dataCommandRepository = {
     // *****************************
     async getAllPosts(): Promise<PostViewModel[] | []> {
         const tempContainer: PostCollectionStorageModel[] | [] =
-            await postsCollection.find({}).toArray();
+            await postsCollection.find({})
+            .toArray();
 
         return tempContainer.map((value: PostCollectionStorageModel) => ({
             id: value._id.toString(),
@@ -791,7 +790,8 @@ export const dataCommandRepository = {
             return {
                 data: null,
                 statusCode: HttpStatus.InternalServerError,
-                statusDescription: `Unknown error inside try-catch block inside dataCommandRepository.updateCommentById: ${JSON.stringify(error)}`,
+                statusDescription: `Unknown error inside try-catch block inside dataCommandRepository.updateCommentById: ${JSON.stringify(
+                    error)}`,
                 errorsMessages: [
                     {
                         field: "dataCommandRepository.updateCommentById", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
@@ -872,7 +872,8 @@ export const dataCommandRepository = {
             return {
                 data: null,
                 statusCode: HttpStatus.InternalServerError,
-                statusDescription: `Unknown error inside try-catch block inside dataCommandRepository.deleteCommentById: ${JSON.stringify(error)}`,
+                statusDescription: `Unknown error inside try-catch block inside dataCommandRepository.deleteCommentById: ${JSON.stringify(
+                    error)}`,
                 errorsMessages: [
                     {
                         field: "dataCommandRepository.deleteCommentById", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
@@ -886,6 +887,98 @@ export const dataCommandRepository = {
     // *****************************
     // методы для управления регистрацией новых пользователей
     // *****************************
+    async confirmRegistrationCode(
+        sentConfirmationCode: RegistrationConfirmationInput
+    ): Promise<CustomResult> {
+        try {
+
+            const searchResult = await usersCollection.aggregate([
+                {
+                    $match: {
+                        "emailConfirmation.confirmationCode": sentConfirmationCode.code,
+                        "emailConfirmation.expirationDate": { $gt: new Date() },
+                        "emailConfirmation.isConfirmed": false
+                    }
+                },
+                {
+                    $project: {
+                        _id: 1
+                    }
+                }
+            ])
+            .toArray();
+
+
+            // aggregate() всегда возвращает массив.
+
+            if (searchResult.length === 1) {
+                const updateResult = await usersCollection.updateOne(
+                    { _id: searchResult[0] },
+                    {
+                        $set: {
+                            "emailConfirmation.confirmationCode": null,
+                            "emailConfirmation.isConfirmed": true
+                        }
+                    }
+                );
+
+                if (updateResult.modifiedCount === 1) {
+                    return {
+                        data: null,
+                        statusCode: HttpStatus.NoContent,
+                        statusDescription: "Successfully confirmed user",
+                        errorsMessages: [
+                            {
+                                field: "",
+                                message: ""
+                            }
+                        ]
+                    };
+                }
+
+                // не смогли обновить юзера
+                return {
+                    data: null,
+                    statusCode: HttpStatus.InternalServerError,
+                    statusDescription: "Couldn't confirm user: dataCommandRepository -> confirmRegistrationCode",
+                    errorsMessages: [
+                        {
+                            field: "",
+                            message: "Couldn't confirm user"
+                        }
+                    ]
+                };
+            }
+
+            // юзер не был найден или просрочен
+            return {
+                data: null,
+                statusCode: HttpStatus.BadRequest,
+                statusDescription: "Couldn't confirm user: dataCommandRepository -> confirmRegistrationCode",
+                errorsMessages: [
+                    {
+                        field: "",
+                        message: "Couldn't confirm user - not existent or out of date"
+                    }
+                ]
+            };
+        } catch (error) {
+            // непредвиденная ошибка
+            return {
+                data: null,
+                statusCode: HttpStatus.InternalServerError,
+                statusDescription: "dataCommandRepository -> confirmRegistrationCode",
+                errorsMessages: [
+                    {
+                        field: "",
+                        message: "Unknown error"
+                    }
+                ]
+            };
+        }
+    },
+
+
     async registerNewUser(
         sentNewUser: RegistrationUserInputModel
     ): Promise<CustomResult> {
@@ -943,7 +1036,7 @@ export const dataCommandRepository = {
                     ]
                 };
             }
-            // СГЕНЕРИРОВАТЬ РЕГИСТРАЦИОННЫЙ КОД
+            // регистрационный код генерируется внутри инстанса юзера, при его создании
 
             // здесь отсылка письма. с точки зрения обработки потенциальных ошибок
             // максимум того что целесообразно сделать, это в том случае если по какой-то причине с нашей стороны чтото сломалось
@@ -953,10 +1046,15 @@ export const dataCommandRepository = {
             // а если письмо просто потерялось или юзер тупит - для нас это может быть куча лишней работы по обслуживанию непонятно чего
             // так что во втором случае пусть юзер сам лучше на себя возьмет это работу - просто повторно отправит если что запррос, нам главно оптимально подобрать период удалления неподтвержденных данных (минут 15-30)
 
-            const sendingResult = await mailerService.sendConfirmationRegisterEmail("\"Alex St\" <geniusb198@yandex.ru>", newUserEntry.email, newUserEntry.emailConfirmation.confirmationCode, emailExamples.registrationEmail);
+            const sendingResult = await mailerService.sendConfirmationRegisterEmail(
+                "\"Alex St\" <geniusb198@yandex.ru>",
+                newUserEntry.email,
+                newUserEntry.emailConfirmation.confirmationCode,
+                emailExamples.registrationEmail
+            );
 
-            let status = "Sending went without problems, awaiting confirmation form user"
-            if(!sendingResult){
+            let status = "Sending went without problems, awaiting confirmation form user";
+            if (!sendingResult) {
                 console.error("Something went wrong during the sending the registration email");
                 status = "Something went wrong during the sending the registration email";
             }

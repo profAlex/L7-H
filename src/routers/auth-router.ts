@@ -6,9 +6,12 @@ import {
 } from "./validation-middleware/UserInputModel-validation-middleware";
 import {
     attemptToLogin,
-    provideUserInfo, registrationAttemptByUser
+    provideUserInfo, registrationAttemptByUser, registrationConfirmation
 } from "./router-handlers/auth-router-description";
 import { tokenGuardVerification } from "./guard-middleware/token-guard";
+import { registrationConfirmationValidator } from "./validation-middleware/auth-router-general-middleware-validator";
+
+
 
 export const authRouter = Router();
 
@@ -17,11 +20,27 @@ authRouter.post(
     "/login",
     loginInputModelValidation,
     inputErrorManagementMiddleware,
-    attemptToLogin,
+    attemptToLogin
+);
+
+authRouter.post(
+    "/registration-confirmation)",
+    registrationConfirmationValidator,
+    inputErrorManagementMiddleware,
+    registrationConfirmation
 );
 
 // Registration in the system. Email with confirmation code will be send to passed email address
-authRouter.post("/registration", userInputModelValidation, inputErrorManagementMiddleware, registrationAttemptByUser);
+authRouter.post(
+    "/registration",
+    userInputModelValidation,
+    inputErrorManagementMiddleware,
+    registrationAttemptByUser
+);
 
 // Get information about current user
-authRouter.get("/me", tokenGuardVerification, provideUserInfo);
+authRouter.get(
+    "/me",
+    tokenGuardVerification,
+    provideUserInfo
+);

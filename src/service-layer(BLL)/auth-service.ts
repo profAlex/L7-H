@@ -8,6 +8,7 @@ import { token } from "../adapters/verification/token-type";
 import { LoginSuccessViewModel } from "../adapters/verification/auth-success-login-model";
 import { RegistrationUserInputModel } from "../routers/router-types/auth-registration-input-model";
 import { dataCommandRepository } from "../repository-layers/command-repository-layer/command-repository";
+import { RegistrationConfirmationInput } from "../routers/router-types/auth-registration-confirmation-input-model";
 
 
 
@@ -69,6 +70,32 @@ export const authService = {
         return resultedToken;
     },
 
+    // пробуем зарегистрировать возвращенный от юзера код подтверждения
+    async confirmRegistrationCode(
+        sentData: RegistrationConfirmationInput
+    ): Promise<CustomResult> {
+        try {
+
+            return await dataCommandRepository.confirmRegistrationCode(sentData);
+
+        } catch (error) {
+            return {
+                data: null,
+                statusCode: HttpStatus.InternalServerError,
+                statusDescription:
+                    "Unknown error in authService -> confirmRegistrationCode",
+                errorsMessages: [
+                    {
+                        field: "",
+                        message: "Unknown error"
+                    }
+                ]
+            };
+        }
+
+    },
+
+
     // пробуем зарегистрировать пользователя по его запросу (т.е. по запросу фронта)
     async registerNewUser(
         sentData: RegistrationUserInputModel
@@ -110,6 +137,7 @@ export const authService = {
             };
         }
     },
+
 
     // вспомогательная функция
     async checkUserCredentials(

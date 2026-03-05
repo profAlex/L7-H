@@ -10,31 +10,39 @@ import { dataQueryRepository } from "../../repository-layers/query-repository-la
 import { LoginSuccessViewModel } from "../../adapters/verification/auth-success-login-model";
 import { AuthLoginInputModel } from "../router-types/auth-login-input-model";
 import { RegistrationUserInputModel } from "../router-types/auth-registration-input-model";
+import { RegistrationConfirmationInput } from "../router-types/auth-registration-confirmation-input-model";
+
+
 
 export const attemptToLogin = async (
     req: Request<{}, {}, AuthLoginInputModel, {}>,
-    res: Response,
+    res: Response
 ) => {
     const { loginOrEmail, password } = req.body;
     const loginResult: CustomResult<LoginSuccessViewModel> =
-        await authService.loginUser(loginOrEmail, password);
+        await authService.loginUser(
+            loginOrEmail,
+            password
+        );
 
     if (!loginResult.data) {
         console.error(
             "Error description: ",
             loginResult?.statusDescription,
-            JSON.stringify(loginResult.errorsMessages),
+            JSON.stringify(loginResult.errorsMessages)
         );
 
-        return res.status(loginResult.statusCode).send("Error");
+        return res.status(loginResult.statusCode)
+            .send("Error");
     }
 
-    return res.status(HttpStatus.Ok).send(loginResult.data);
+    return res.status(HttpStatus.Ok)
+        .send(loginResult.data);
 };
 
 export const provideUserInfo = async (
     req: RequestWithUserId<UserIdType>,
-    res: Response,
+    res: Response
 ) => {
     if (!req.user) {
         console.error("req.user is not found");
@@ -53,12 +61,35 @@ export const provideUserInfo = async (
 
     // ДОЛЖНО ИДТИ ЧЕРЕЗ СЕРВИС!
     const userInfo = await dataQueryRepository.findUserForMe(userId);
-    return res.status(HttpStatus.Ok).send(userInfo);
+    return res.status(HttpStatus.Ok)
+        .send(userInfo);
 };
+
+
+export const registrationConfirmation = async (
+    req: RequestWithBody<RegistrationConfirmationInput>,
+    res: Response
+) => {
+    const confirmationResult: CustomResult = await authService.confirmRegistrationCode(req.body);
+
+    if (confirmationResult.statusCode !== HttpStatus.Ok) {
+        console.error(
+            "Error description: ",
+            confirmationResult?.statusDescription,
+            JSON.stringify(confirmationResult.errorsMessages)
+        );
+
+        return res.status(confirmationResult.statusCode)
+            .send("Error");
+    }
+
+    return res.sendStatus(HttpStatus.NoContent);
+};
+
 
 export const registrationAttemptByUser = async (
     req: RequestWithBody<RegistrationUserInputModel>,
-    res: Response,
+    res: Response
 ) => {
     // const { loginOrEmail, password } = req.body;
     const registrationResult: CustomResult =
@@ -68,10 +99,11 @@ export const registrationAttemptByUser = async (
         console.error(
             "Error description: ",
             registrationResult?.statusDescription,
-            JSON.stringify(registrationResult.errorsMessages),
+            JSON.stringify(registrationResult.errorsMessages)
         );
 
-        return res.status(registrationResult.statusCode).send("Error");
+        return res.status(registrationResult.statusCode)
+            .send("Error");
     }
 
     return res.sendStatus(HttpStatus.NoContent);
