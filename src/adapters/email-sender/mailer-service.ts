@@ -1,22 +1,28 @@
 import nodemailer from "nodemailer";
 
+
 export const emailExamples = {
     registrationEmail(code: string) {
         return ` <h1>Thank for your registration</h1>
                <p>To finish registration please follow the link below:<br>
                   <a href='https://somesite.com/confirm-email?code=${code}'>complete registration</a>
-              </p>`
+              </p>`;
     },
     passwordRecoveryEmail(code: string) {
         return `<h1>Password recovery</h1>
         <p>To finish password recovery please follow the link below:
             <a href='https://somesite.com/password-recovery?recoveryCode=${code}'>recovery password</a>
-        </p>`
+        </p>`;
     }
-}
+};
 
 export const mailerService = {
-    async sendConfirmationRegisterEmail(from: string, to: string, registrationCode: string, template: (registrationCode: string) => string) {
+    async sendConfirmationRegisterEmail(
+        from: string,
+        to: string,
+        registrationCode: string,
+        template: (registrationCode: string) => string
+    ): Promise<boolean> {
 
         const transporter = nodemailer.createTransport({
             host: "smtp.yandex.ru",
@@ -33,7 +39,7 @@ export const mailerService = {
             to: to,
             subject: "Registration confirmation",
             text: "Please, follow the provided link to finish Your registration.",
-            html: template(registrationCode),
+            html: template(registrationCode)
         };
 
         try {
@@ -42,12 +48,15 @@ export const mailerService = {
 
             return !!info;
         } catch (error) {
-            console.error("Ошибка отправки письма:", error);
+            console.error(
+                "Ошибка отправки письма:",
+                error
+            );
 
             return false;
         }
 
-    },
+    }
 
     // async sendEmail(
     //     email: string,
