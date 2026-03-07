@@ -108,7 +108,22 @@ export const authService = {
             const ifUserLoginExists = await dataCommandRepository.findByLoginOrEmail(sentData.login);
             const ifUserEmailExists = await dataCommandRepository.findByLoginOrEmail(sentData.email);
 
-            if (ifUserLoginExists || ifUserEmailExists) {
+            if (ifUserLoginExists) {
+                return {
+                    data: null,
+                    statusCode: HttpStatus.BadRequest,
+                    statusDescription:
+                        "authService -> registerNewUser -> if(ifUserLoginExists || ifUserEmailExists)",
+                    errorsMessages: [
+                        {
+                            field: "login",
+                            message: "Email or Login already exists!!!"
+                        }
+                    ]
+                };
+            }
+
+            if (ifUserEmailExists) {
                 return {
                     data: null,
                     statusCode: HttpStatus.BadRequest,
