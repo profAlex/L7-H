@@ -138,10 +138,10 @@ export const createNewComment = async (
             field: "'if (!postId)' check failed",
         });
 
-        return res.status(HttpStatus.InternalServerError).json({
+        return res.status(HttpStatus.InternalServerError).json({errorsMessages: [{
             message: "Internal server error",
             field: "",
-        });
+        }]});
     }
 
     // проверка, что postId — валидная строка (не пустая)
@@ -152,10 +152,10 @@ export const createNewComment = async (
             field: "'if (typeof postId !== \"string\" || postId.trim().length === 0)' check failed",
         });
 
-        return res.status(HttpStatus.InternalServerError).json({
+        return res.status(HttpStatus.InternalServerError).json({errorsMessages: [{
             message: "Internal server error",
             field: "",
-        });
+        }]});
     }
 
     if (!req.body) {
@@ -165,10 +165,10 @@ export const createNewComment = async (
             field: "'if (!req.body) ' check failed",
         });
 
-        return res.status(HttpStatus.InternalServerError).json({
+        return res.status(HttpStatus.InternalServerError).json({errorsMessages: [{
             message: "Internal server error",
             field: "",
-        });
+        }]});
     }
 
     // проверка тела запроса: content
@@ -180,10 +180,10 @@ export const createNewComment = async (
             field: "'if (!content) ' check failed",
         });
 
-        return res.status(HttpStatus.InternalServerError).json({
+        return res.status(HttpStatus.InternalServerError).json({errorsMessages: [{
             message: "Internal server error",
             field: "",
-        });
+        }]});
     }
 
     // проверка, что content — валидная строка (не пустая)
@@ -194,10 +194,10 @@ export const createNewComment = async (
             field: "'if (typeof content !== \"string\" || content.trim().length === 0)' check failed",
         });
 
-        return res.status(HttpStatus.InternalServerError).json({
+        return res.status(HttpStatus.InternalServerError).json({errorsMessages: [{
             message: "Internal server error",
             field: "",
-        });
+        }]});
     }
 
     // проверка наличия userId в структуре req
@@ -208,10 +208,10 @@ export const createNewComment = async (
             field: "'if (!req.user || !req.user.userId)' check failed",
         });
 
-        return res.status(HttpStatus.InternalServerError).json({
+        return res.status(HttpStatus.InternalServerError).json({errorsMessages: [{
             message: "Internal server error",
             field: "",
-        });
+        }]});
     }
 
     const userId = req.user.userId;
@@ -222,10 +222,10 @@ export const createNewComment = async (
             field: "'if (typeof userId !== \"string\" || userId.trim().length === 0)' check failed",
         });
 
-        return res.status(HttpStatus.InternalServerError).json({
+        return res.status(HttpStatus.InternalServerError).json({errorsMessages: [{
             message: "Internal server error",
             field: "",
-        });
+        }]});
     }
 
     const newCommentResult = await postsService.createNewComment(
@@ -241,7 +241,7 @@ export const createNewComment = async (
             JSON.stringify(newCommentResult.errorsMessages),
         );
 
-        return res.status(newCommentResult.statusCode).json(newCommentResult.errorsMessages);
+        return res.status(newCommentResult.statusCode).json({ errorsMessages: newCommentResult.errorsMessages });
     }
 
     return res.status(newCommentResult.statusCode).send(newCommentResult.data);

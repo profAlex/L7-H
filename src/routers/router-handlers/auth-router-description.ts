@@ -34,7 +34,7 @@ export const attemptToLogin = async (
         );
 
         return res.status(loginResult.statusCode)
-            .send(loginResult.errorsMessages);
+            .send({ errorsMessages: loginResult.errorsMessages });
     }
 
     return res.status(HttpStatus.Ok)
@@ -49,7 +49,7 @@ export const provideUserInfo = async (
         console.error("req.user is not found");
         return res
             .status(HttpStatus.InternalServerError)
-            .json({ field: "", message: "" });
+            .json({errorsMessages: [{ field: "", message: "" }]});
     }
 
     const userId = req.user.userId;
@@ -57,7 +57,7 @@ export const provideUserInfo = async (
         console.error("userId inside req.user is undefined or null");
         return res
             .status(HttpStatus.InternalServerError)
-            .json({ field: "", message: "" });
+            .json({errorsMessages: [{ field: "", message: "" }]});
     }
 
     // ДОЛЖНО ИДТИ ЧЕРЕЗ СЕРВИС!
@@ -80,7 +80,7 @@ export const resendRegistrationConfirmation = async (
         );
 
         return res.status(resentConfirmationResult.statusCode)
-            .send(resentConfirmationResult.errorsMessages);
+            .send({ errorsMessages: resentConfirmationResult.errorsMessages });
     }
 
     return res.sendStatus(HttpStatus.NoContent);
@@ -101,7 +101,7 @@ export const registrationConfirmation = async (
         );
 
         return res.status(confirmationResult.statusCode)
-            .send(confirmationResult.errorsMessages);
+            .send({ errorsMessages: confirmationResult.errorsMessages });
     }
 
     return res.sendStatus(HttpStatus.NoContent);
@@ -124,7 +124,7 @@ export const registrationAttemptByUser = async (
         );
 
         return res.status(registrationResult.statusCode)
-            .send(registrationResult.errorsMessages);
+            .send({ errorsMessages: registrationResult.errorsMessages });
     }
 
     return res.sendStatus(HttpStatus.NoContent);
