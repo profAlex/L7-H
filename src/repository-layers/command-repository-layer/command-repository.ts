@@ -1007,7 +1007,10 @@ export const dataCommandRepository = {
             }
 
             const tempId = new ObjectId();
-
+            console.log(
+                "000 HERE <-------------",
+                tempId.toString()
+            );
             // нижеследующее заменили на инициализацию через клас User через extend interface UserCollectionStorageModel
             // const newUserEntry = {
             //     _id: tempId,
@@ -1098,8 +1101,12 @@ export const dataCommandRepository = {
         userId: ObjectId
     ): Promise<CustomResult> {
         try {
+            console.log(
+                "<--------------",
+                userId.toString()
+            );
 
-            const userEntry = await usersCollection.findOne({ userId });
+            const userEntry = await usersCollection.findOne({ _id: userId }); // очень важно!! обязательнь указывать поле по которому идет поиск! '_id:', без него может не найти, хотя ошибку синтаксически не покажет
 
             if (!userEntry) {
                 return {
