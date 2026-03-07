@@ -66,26 +66,6 @@ export const provideUserInfo = async (
         .send(userInfo);
 };
 
-export const resendRegistrationConfirmation = async (
-    req: RequestWithBody<ResentRegistrationConfirmationInput>,
-    res: Response
-) => {
-    const resentConfirmationResult: CustomResult = await authService.resendConfirmRegistrationCode(req.body);
-
-    if (resentConfirmationResult.statusCode !== HttpStatus.Ok) {
-        console.error(
-            "Error description: ",
-            resentConfirmationResult?.statusDescription,
-            JSON.stringify(resentConfirmationResult.errorsMessages)
-        );
-
-        return res.status(resentConfirmationResult.statusCode)
-            .send({ errorsMessages: resentConfirmationResult.errorsMessages });
-    }
-
-    return res.sendStatus(HttpStatus.NoContent);
-};
-
 
 export const registrationConfirmation = async (
     req: RequestWithBody<RegistrationConfirmationInput>,
@@ -129,4 +109,25 @@ export const registrationAttemptByUser = async (
 
     return res.sendStatus(HttpStatus.NoContent);
 
+};
+
+
+export const resendRegistrationConfirmation = async (
+    req: RequestWithBody<ResentRegistrationConfirmationInput>,
+    res: Response
+) => {
+    const resentConfirmationResult: CustomResult = await authService.resendConfirmRegistrationCode(req.body);
+
+    if (resentConfirmationResult.statusCode !== HttpStatus.Ok) {
+        console.error(
+            "Error description: ",
+            resentConfirmationResult?.statusDescription,
+            JSON.stringify(resentConfirmationResult.errorsMessages)
+        );
+
+        return res.status(resentConfirmationResult.statusCode)
+            .send({ errorsMessages: resentConfirmationResult.errorsMessages });
+    }
+
+    return res.sendStatus(HttpStatus.NoContent);
 };

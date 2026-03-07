@@ -913,12 +913,21 @@ export const dataCommandRepository = {
                 ])
                 .toArray();
 
+            // console.log(
+            //     "ARRAY LENGTH HERE <-------------",
+            //     searchResult.length
+            // );
+            //
+            // console.log(
+            //     "FOUND HERE <-------------",
+            //     searchResult[0]._id.toString()
+            // );
 
-            // aggregate() всегда возвращает массив.
+            // aggregate() всегда возвращает массив!
 
             if (searchResult.length === 1) {
                 const updateResult = await usersCollection.updateOne(
-                    { _id: searchResult[0] },
+                    { _id: searchResult[0]._id },
                     {
                         $set: {
                             "emailConfirmation.confirmationCode": null,
@@ -1007,10 +1016,11 @@ export const dataCommandRepository = {
             }
 
             const tempId = new ObjectId();
-            console.log(
-                "000 HERE <-------------",
-                tempId.toString()
-            );
+
+            // console.log(
+            //     "REGISTERED NEW HERE <-------------",
+            //     tempId.toString()
+            // );
             // нижеследующее заменили на инициализацию через клас User через extend interface UserCollectionStorageModel
             // const newUserEntry = {
             //     _id: tempId,
@@ -1101,10 +1111,10 @@ export const dataCommandRepository = {
         userId: ObjectId
     ): Promise<CustomResult> {
         try {
-            console.log(
-                "<--------------",
-                userId.toString()
-            );
+            // console.log(
+            //     "<--------------",
+            //     userId.toString()
+            // );
 
             const userEntry = await usersCollection.findOne({ _id: userId }); // очень важно!! обязательнь указывать поле по которому идет поиск! '_id:', без него может не найти, хотя ошибку синтаксически не покажет
 
