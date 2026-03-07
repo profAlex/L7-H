@@ -106,7 +106,7 @@ export const authService = {
         try {
 
             const ifUserLoginExists = await dataCommandRepository.findByLoginOrEmail(sentData.login);
-            const ifUserEmailExists = await dataCommandRepository.findByLoginOrEmail(sentData.login);
+            const ifUserEmailExists = await dataCommandRepository.findByLoginOrEmail(sentData.email);
 
             if (ifUserLoginExists || ifUserEmailExists) {
                 return {
