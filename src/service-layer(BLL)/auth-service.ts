@@ -172,7 +172,7 @@ export const authService = {
                         "authService -> resendConfirmRegistrationCode -> if (isUserInDatabase)",
                     errorsMessages: [
                         {
-                            field: "",
+                            field: "email",
                             message: "Email doesn't exist or already confirmed"
                         }
                     ]

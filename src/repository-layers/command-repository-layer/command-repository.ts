@@ -971,7 +971,7 @@ export const dataCommandRepository = {
                 statusDescription: "Couldn't confirm user: dataCommandRepository -> confirmRegistrationCode",
                 errorsMessages: [
                     {
-                        field: "",
+                        field: "code",
                         message: "Couldn't confirm user - not existent or out of date"
                     }
                 ]
