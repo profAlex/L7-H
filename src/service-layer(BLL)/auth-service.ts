@@ -116,8 +116,8 @@ export const authService = {
                         "authService -> registerNewUser -> if(ifUserLoginExists || ifUserEmailExists)",
                     errorsMessages: [
                         {
-                            field: "",
-                            message: "Email or Login already exists"
+                            field: "!!!",
+                            message: "Email or Login already exists!!!"
                         }
                     ]
                 };

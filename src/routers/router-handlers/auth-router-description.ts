@@ -117,11 +117,11 @@ export const registrationAttemptByUser = async (
         await authService.registerNewUser(req.body);
 
     if (registrationResult.statusCode !== HttpStatus.Ok) {
-        console.error(
-            "Error description: ",
-            registrationResult?.statusDescription,
-            JSON.stringify(registrationResult.errorsMessages)
-        );
+        // console.error(
+        //     "Error description: ",
+        //     registrationResult?.statusDescription,
+        //     JSON.stringify(registrationResult.errorsMessages)
+        // );
 
         return res.status(registrationResult.statusCode)
             .send({ errorsMessages: registrationResult.errorsMessages });
