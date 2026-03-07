@@ -241,7 +241,7 @@ export const createNewComment = async (
             JSON.stringify(newCommentResult.errorsMessages),
         );
 
-        return res.status(newCommentResult.statusCode).send("Error");
+        return res.status(newCommentResult.statusCode).json(newCommentResult.errorsMessages);
     }
 
     return res.status(newCommentResult.statusCode).send(newCommentResult.data);
