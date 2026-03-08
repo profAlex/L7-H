@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { ObjectId } from "mongodb";
 import { UUIDgeneration } from "../../adapters/randomUUIDgeneration/UUIDgeneration";
 
@@ -23,7 +22,7 @@ export class User {
         this.passwordHash = hash;
         this.createdAt = new Date();
         this.emailConfirmation = {
-            confirmationCode: UUIDgeneration.generateUUID(),
+            confirmationCode: UUIDgeneration.generateUUID(), // вынесено в функцию чтобы было удобнее мокать эту функцию для проверки в тестах
             expirationDate: new Date(
                 new Date().setMinutes(new Date().getMinutes() + 30),
             ),

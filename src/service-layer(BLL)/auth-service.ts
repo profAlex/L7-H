@@ -12,6 +12,9 @@ import { RegistrationConfirmationInput } from "../routers/router-types/auth-regi
 import {
     ResentRegistrationConfirmationInput
 } from "../routers/router-types/auth-resent-registration-confirmation-input-model";
+import { ObjectId } from "mongodb";
+import { User } from "../common/classes/user-class";
+import { emailExamples, mailerService } from "../adapters/email-sender/mailer-service";
 
 
 
@@ -113,7 +116,7 @@ export const authService = {
                     data: null,
                     statusCode: HttpStatus.BadRequest,
                     statusDescription:
-                        "authService -> registerNewUser -> if(ifUserLoginExists || ifUserEmailExists)",
+                        "authService -> registerNewUser -> if(ifUserLoginExists)",
                     errorsMessages: [
                         {
                             field: "login",
@@ -128,7 +131,7 @@ export const authService = {
                     data: null,
                     statusCode: HttpStatus.BadRequest,
                     statusDescription:
-                        "authService -> registerNewUser -> if(ifUserLoginExists || ifUserEmailExists)",
+                        "authService -> registerNewUser -> if(ifUserEmailExists)",
                     errorsMessages: [
                         {
                             field: "email",
@@ -138,7 +141,91 @@ export const authService = {
                 };
             }
 
-            return await dataCommandRepository.registerNewUser(sentData);
+            const passwordHash = await bcryptService.generateHash(
+                sentData.password
+            );
+
+            if (!passwordHash) {
+                return {
+                    data: null,
+                    statusCode: HttpStatus.InternalServerError,
+                    statusDescription: "",
+                    errorsMessages: [
+                        {
+                            field: "bcryptService.generateHash",
+                            message: "Generating hash error"
+                        }
+                    ]
+                };
+            }
+
+            const tempId = new ObjectId();
+
+            // console.log(
+            //     "REGISTERED NEW HERE <-------------",
+            //     tempId.toString()
+            // );
+            // нижеследующее заменили на инициализацию через клас User через extend interface UserCollectionStorageModel
+            // const newUserEntry = {
+            //     _id: tempId,
+            //     id: tempId.toString(),
+            //     login: sentNewUser.login,
+            //     email: sentNewUser.email,
+            //     passwordHash: passwordHash,
+            //     createdAt: new Date(),
+            // } as UserCollectionStorageModel;
+
+            const newUserEntry = new User(
+                sentData.login,
+                sentData.email,
+                passwordHash,
+                tempId
+            );
+
+            const newUserInsertionResult = await dataCommandRepository.registerNewUser(newUserEntry);
+
+            if(newUserInsertionResult.statusCode !== HttpStatus.Ok ) {
+                return {
+                    data: newUserInsertionResult.data,
+                    statusCode: newUserInsertionResult.statusCode,
+                    statusDescription: newUserInsertionResult.statusDescription,
+                    errorsMessages: newUserInsertionResult.errorsMessages
+                };
+            }
+
+            // здесь отсылка письма. с точки зрения обработки потенциальных ошибок
+            // максимум того что целесообразно сделать, это в том случае если по какой-то причине с нашей стороны чтото сломалось
+            // никак не говорить об этом юзерам, пускай они самостоятельно повторно отправляют запрос, мы максимум логируем ошибку
+            // тут жестко будет связано с политикой компании по этому поводу
+            // так делается чтобы не брать на себя лишней работы, т.к. в случае реальной проблемы с сервисом отправки мы так или иначе будем это чинить
+            // а если письмо просто потерялось или юзер тупит - для нас это может быть куча лишней работы по обслуживанию непонятно чего
+            // так что во втором случае пусть юзер сам лучше на себя возьмет это работу - просто повторно отправит если что запррос, нам главно оптимально подобрать период удалления неподтвержденных данных (минут 15-30)
+
+            const sendingResult = await mailerService.sendConfirmationRegisterEmail(
+                "\"Alex St\" <geniusb198@yandex.ru>",
+                newUserEntry.email,
+                newUserEntry.emailConfirmation.confirmationCode,
+                emailExamples.registrationEmail
+            );
+
+            let status = "Sending went without problems, awaiting confirmation form user";
+            if (!sendingResult) {
+                console.error("Something went wrong while sending the registration email");
+                status = "Something went wrong while sending the registration email";
+            }
+
+            // отправка результата что все ОК
+            return {
+                data: null,
+                statusCode: HttpStatus.NoContent,
+                statusDescription: status,
+                errorsMessages: [
+                    {
+                        field: "",
+                        message: ""
+                    }
+                ]
+            };
 
         } catch (error) {
             return {

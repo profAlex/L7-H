@@ -131,74 +131,74 @@ export const createNewComment = async (
 ) => {
     // проверка параметра URL: postId
     const postId = req.params[IdParamName.PostId];
-    if (!postId) {
-        console.error({
-            message:
-                "Missing required parameter: postId inside createNewComment handler",
-            field: "'if (!postId)' check failed",
-        });
+    // if (!postId) {
+    //     console.error({
+    //         message:
+    //             "Missing required parameter: postId inside createNewComment handler",
+    //         field: "'if (!postId)' check failed",
+    //     });
+    //
+    //     return res.status(HttpStatus.InternalServerError).json({errorsMessages: [{
+    //         message: "Internal server error",
+    //         field: "",
+    //     }]});
+    // }
+    //
+    // // проверка, что postId — валидная строка (не пустая)
+    // if (typeof postId !== "string" || postId.trim().length === 0) {
+    //     console.error({
+    //         message:
+    //             "Required parameter has incorrect format: 'postId' inside createNewComment handler",
+    //         field: "'if (typeof postId !== \"string\" || postId.trim().length === 0)' check failed",
+    //     });
+    //
+    //     return res.status(HttpStatus.InternalServerError).json({errorsMessages: [{
+    //         message: "Internal server error",
+    //         field: "",
+    //     }]});
+    // }
+    //
+    // if (!req.body) {
+    //     console.error({
+    //         message:
+    //             "Required parameter is missing: 'req.body' inside createNewComment handler",
+    //         field: "'if (!req.body) ' check failed",
+    //     });
+    //
+    //     return res.status(HttpStatus.InternalServerError).json({errorsMessages: [{
+    //         message: "Internal server error",
+    //         field: "",
+    //     }]});
+    // }
 
-        return res.status(HttpStatus.InternalServerError).json({errorsMessages: [{
-            message: "Internal server error",
-            field: "",
-        }]});
-    }
-
-    // проверка, что postId — валидная строка (не пустая)
-    if (typeof postId !== "string" || postId.trim().length === 0) {
-        console.error({
-            message:
-                "Required parameter has incorrect format: 'postId' inside createNewComment handler",
-            field: "'if (typeof postId !== \"string\" || postId.trim().length === 0)' check failed",
-        });
-
-        return res.status(HttpStatus.InternalServerError).json({errorsMessages: [{
-            message: "Internal server error",
-            field: "",
-        }]});
-    }
-
-    if (!req.body) {
-        console.error({
-            message:
-                "Required parameter is missing: 'req.body' inside createNewComment handler",
-            field: "'if (!req.body) ' check failed",
-        });
-
-        return res.status(HttpStatus.InternalServerError).json({errorsMessages: [{
-            message: "Internal server error",
-            field: "",
-        }]});
-    }
-
-    // проверка тела запроса: content
+    // // проверка тела запроса: content
     const { content } = req.body;
-    if (!content) {
-        console.error({
-            message:
-                "Required parameter is missing: 'content' inside createNewComment handler",
-            field: "'if (!content) ' check failed",
-        });
-
-        return res.status(HttpStatus.InternalServerError).json({errorsMessages: [{
-            message: "Internal server error",
-            field: "",
-        }]});
-    }
-
-    // проверка, что content — валидная строка (не пустая)
-    if (typeof content !== "string" || content.trim().length === 0) {
-        console.error({
-            message:
-                "Required parameter has incorrect format: 'content' inside createNewComment handler",
-            field: "'if (typeof content !== \"string\" || content.trim().length === 0)' check failed",
-        });
-
-        return res.status(HttpStatus.InternalServerError).json({errorsMessages: [{
-            message: "Internal server error",
-            field: "",
-        }]});
-    }
+    // if (!content) {
+    //     console.error({
+    //         message:
+    //             "Required parameter is missing: 'content' inside createNewComment handler",
+    //         field: "'if (!content) ' check failed",
+    //     });
+    //
+    //     return res.status(HttpStatus.InternalServerError).json({errorsMessages: [{
+    //         message: "Internal server error",
+    //         field: "",
+    //     }]});
+    // }
+    //
+    // // проверка, что content — валидная строка (не пустая)
+    // if (typeof content !== "string" || content.trim().length === 0) {
+    //     console.error({
+    //         message:
+    //             "Required parameter has incorrect format: 'content' inside createNewComment handler",
+    //         field: "'if (typeof content !== \"string\" || content.trim().length === 0)' check failed",
+    //     });
+    //
+    //     return res.status(HttpStatus.InternalServerError).json({errorsMessages: [{
+    //         message: "Internal server error",
+    //         field: "",
+    //     }]});
+    // }
 
     // проверка наличия userId в структуре req
     if (!req.user || !req.user.userId) {
@@ -215,7 +215,7 @@ export const createNewComment = async (
     }
 
     const userId = req.user.userId;
-    if (typeof userId !== "string" || userId.trim().length === 0) {
+    if (userId.trim().length === 0) {
         console.error({
             message:
                 "Required parameter has incorrect format: 'req.user.userId' inside createNewComment handler",

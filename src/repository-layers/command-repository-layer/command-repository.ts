@@ -76,7 +76,7 @@ async function findUserByPrimaryKey(
 
 
 
-async function findCommentByPrimaryKey(
+export async function findCommentByPrimaryKey(
     id: ObjectId
 ): Promise<CommentStorageModel | null> {
     return commentsCollection.findOne({ _id: id });
@@ -626,85 +626,72 @@ export const dataCommandRepository = {
         userId: string
     ): Promise<CustomResult<CommentViewModel>> {
         try {
-            if (ObjectId.isValid(userId) && ObjectId.isValid(postId)) {
-                // проверяем существует ли такой юзер и возвращаем его логин
-                // ищем существует ли такой пост
-                // создаем временный объект, куда записываем postId, userId, создаем и записываем id нового объекта
-                const user = await findUserByPrimaryKey(new ObjectId(userId));
+            //if (ObjectId.isValid(userId) && ObjectId.isValid(postId)) {
+            // проверяем существует ли такой юзер и возвращаем его логин
+            // ищем существует ли такой пост
+            // создаем временный объект, куда записываем postId, userId, создаем и записываем id нового объекта
+            const user = await findUserByPrimaryKey(new ObjectId(userId));
 
-                if (!user) {
-                    return {
-                        data: null,
-                        statusCode: HttpStatus.InternalServerError,
-                        statusDescription:
-                            "User is not found, possibly because its token is valid but user-record was already deleted or due to an database error",
-                        errorsMessages: [
-                            {
-                                field: "dataCommandRepository.createNewComment -> findUserByPrimaryKey(new ObjectId(userId))", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                                message: "Couldn't find User record" // ошибкам надо присваивать кода, чтобы пользователи могли сообщать номер ошибки в техподдержку
-                            }
-                        ]
-                    } as CustomResult<CommentViewModel>;
-                }
-                const userLogin = user.login;
-                // тут по-идее также проверка на соответствие userLogin требованиям?
-
-                const tempId = new ObjectId();
-                const newCommentEntry = {
-                    _id: tempId,
-                    id: tempId.toString(),
-                    relatedPostId: postId,
-                    content: content,
-                    commentatorInfo: { userId: userId, userLogin: userLogin },
-                    createdAt: new Date()
-                } as CommentStorageModel;
-
-                const result =
-                    await commentsCollection.insertOne(newCommentEntry);
-
-                if (!result.acknowledged) {
-                    return {
-                        data: null,
-                        statusCode: HttpStatus.InternalServerError,
-                        statusDescription: "Error while inserting new comment",
-                        errorsMessages: [
-                            {
-                                field: "dataCommandRepository.createNewComment -> commentsCollection.insertOne(newCommentEntry)", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                                message: "Error while inserting new comment"
-                            }
-                        ]
-                    } as CustomResult<CommentViewModel>;
-                }
-
-                return {
-                    data: {
-                        id: newCommentEntry.id,
-                        content: newCommentEntry.content,
-                        commentatorInfo: newCommentEntry.commentatorInfo,
-                        createdAt: newCommentEntry.createdAt
-                    } as CommentViewModel,
-                    statusCode: HttpStatus.Created,
-                    errorsMessages: [
-                        {
-                            field: null,
-                            message: null
-                        }
-                    ]
-                } as CustomResult<CommentViewModel>;
-            } else {
+            if (!user) {
                 return {
                     data: null,
                     statusCode: HttpStatus.InternalServerError,
                     statusDescription:
-                        "User ID or Post ID dont look like valid mongo ID. Need to check input data and corresponding user and post records.",
+                        "User is not found, possibly because its token is valid but user-record was already deleted or due to an database error",
                     errorsMessages: [
                         {
-                            field: "dataCommandRepository.createNewComment -> if (ObjectId.isValid(userId) && ObjectId.isValid(postId))", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                            message: "User ID or Post ID have invalid format"
+                            field: "dataCommandRepository.createNewComment -> findUserByPrimaryKey(new ObjectId(userId))", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
+                            message: "Couldn't find User record" // ошибкам надо присваивать кода, чтобы пользователи могли сообщать номер ошибки в техподдержку
                         }
                     ]
                 } as CustomResult<CommentViewModel>;
             }
+            const userLogin = user.login;
+            // тут по-идее также проверка на соответствие userLogin требованиям?
+
+            const tempId = new ObjectId();
+            const newCommentEntry = {
+                _id: tempId,
+                id: tempId.toString(),
+                relatedPostId: postId,
+                content: content,
+                commentatorInfo: { userId: userId, userLogin: userLogin },
+                createdAt: new Date()
+            } as CommentStorageModel;
+
+            const result =
+                await commentsCollection.insertOne(newCommentEntry);
+
+            if (!result.acknowledged) {
+                return {
+                    data: null,
+                    statusCode: HttpStatus.InternalServerError,
+                    statusDescription: "Error while inserting new comment",
+                    errorsMessages: [
+                        {
+                            field: "dataCommandRepository.createNewComment -> commentsCollection.insertOne(newCommentEntry)", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
+                            message: "Error while inserting new comment"
+                        }
+                    ]
+                } as CustomResult<CommentViewModel>;
+            }
+
+            return {
+                data: {
+                    id: newCommentEntry.id,
+                    content: newCommentEntry.content,
+                    commentatorInfo: newCommentEntry.commentatorInfo,
+                    createdAt: newCommentEntry.createdAt
+                } as CommentViewModel,
+                statusCode: HttpStatus.Created,
+                errorsMessages: [
+                    {
+                        field: null,
+                        message: null
+                    }
+                ]
+            };
+
         } catch (error) {
             console.error(`Unknown error: ${JSON.stringify(error)}`);
             // throw new Error("Placeholder for an error to be rethrown and dealt with in the future in createNewUser method of dataCommandRepository");
@@ -724,41 +711,11 @@ export const dataCommandRepository = {
 
     async updateCommentById(
         sentCommentId: string,
-        sentUserId: string,
+        //sentUserId: string,
         sentContent: CommentInputModel
     ): Promise<CustomResult> {
         try {
-            const comment = await findCommentByPrimaryKey(
-                new ObjectId(sentCommentId)
-            );
 
-            if (!comment) {
-                return {
-                    data: null,
-                    statusCode: HttpStatus.InternalServerError,
-                    statusDescription: `Comment is not found by sent comment ID ${sentCommentId} inside dataCommandRepository.updateCommentById. Even though this exact ID passed existence check in middlewares previously.`,
-                    errorsMessages: [
-                        {
-                            field: "if (!comment) inside dataCommandRepository.updateCommentById", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                            message: `Internal Server Error`
-                        }
-                    ]
-                } as CustomResult;
-            }
-
-            if (sentUserId !== comment.commentatorInfo.userId) {
-                return {
-                    data: null,
-                    statusCode: HttpStatus.Forbidden,
-                    statusDescription: `User is forbidden to change another user’s comment`,
-                    errorsMessages: [
-                        {
-                            field: "if (sentUserId !== comment.commentatorInfo.userId) inside dataCommandRepository.updateCommentById", // это служебная и отладочная информация, к ней НЕ должен иметь доступ фронтенд, обрабатываем внутри периметра работы бэкэнда
-                            message: `User is forbidden to change another user’s comment`
-                        }
-                    ]
-                } as CustomResult;
-            }
 
             const res = await commentsCollection.updateOne(
                 { _id: new ObjectId(sentCommentId) },
@@ -994,51 +951,12 @@ export const dataCommandRepository = {
 
 
     async registerNewUser(
-        sentNewUser: RegistrationUserInputModel
+        sentNewUser: User
     ): Promise<CustomResult> {
         try {
-            const passwordHash = await bcryptService.generateHash(
-                sentNewUser.password
-            );
 
-            if (!passwordHash) {
-                return {
-                    data: null,
-                    statusCode: HttpStatus.InternalServerError,
-                    statusDescription: "",
-                    errorsMessages: [
-                        {
-                            field: "bcryptService.generateHash",
-                            message: "Generating hash error"
-                        }
-                    ]
-                };
-            }
 
-            const tempId = new ObjectId();
-
-            // console.log(
-            //     "REGISTERED NEW HERE <-------------",
-            //     tempId.toString()
-            // );
-            // нижеследующее заменили на инициализацию через клас User через extend interface UserCollectionStorageModel
-            // const newUserEntry = {
-            //     _id: tempId,
-            //     id: tempId.toString(),
-            //     login: sentNewUser.login,
-            //     email: sentNewUser.email,
-            //     passwordHash: passwordHash,
-            //     createdAt: new Date(),
-            // } as UserCollectionStorageModel;
-
-            const newUserEntry = new User(
-                sentNewUser.login,
-                sentNewUser.email,
-                passwordHash,
-                tempId
-            );
-
-            const result = await usersCollection.insertOne(newUserEntry);
+            const result = await usersCollection.insertOne(sentNewUser);
             // newUserEntry.emailConfirmation.isConfirmed = true; // для созданных админом пользователей подтверждения не нужно
 
             if (!result.acknowledged) {
@@ -1054,41 +972,20 @@ export const dataCommandRepository = {
                     ]
                 };
             }
-            // регистрационный код генерируется внутри инстанса юзера, при его создании
 
-            // здесь отсылка письма. с точки зрения обработки потенциальных ошибок
-            // максимум того что целесообразно сделать, это в том случае если по какой-то причине с нашей стороны чтото сломалось
-            // никак не говорить об этом юзерам, пускай они самостоятельно повторно отправляют запрос, мы максимум логируем ошибку
-            // тут жестко будет связано с политикой компании по этому поводу
-            // так делается чтобы не брать на себя лишней работы, т.к. в случае реальной проблемы с сервисом отправки мы так или иначе будем это чинить
-            // а если письмо просто потерялось или юзер тупит - для нас это может быть куча лишней работы по обслуживанию непонятно чего
-            // так что во втором случае пусть юзер сам лучше на себя возьмет это работу - просто повторно отправит если что запррос, нам главно оптимально подобрать период удалления неподтвержденных данных (минут 15-30)
-
-            const sendingResult = await mailerService.sendConfirmationRegisterEmail(
-                "\"Alex St\" <geniusb198@yandex.ru>",
-                newUserEntry.email,
-                newUserEntry.emailConfirmation.confirmationCode,
-                emailExamples.registrationEmail
-            );
-
-            let status = "Sending went without problems, awaiting confirmation form user";
-            if (!sendingResult) {
-                console.error("Something went wrong while sending the registration email");
-                status = "Something went wrong while sending the registration email";
-            }
-
-            // отправка результата что все ОК
             return {
                 data: null,
-                statusCode: HttpStatus.NoContent,
-                statusDescription: status,
+                statusCode: HttpStatus.Ok,
+                statusDescription: "dataCommandRepository -> registerNewUser -> usersCollection.insertOne(newUserEntry)",
                 errorsMessages: [
                     {
                         field: "",
-                        message: ""
+                        message: "Unknown error"
                     }
                 ]
             };
+
+
         } catch (error) {
             return {
                 data: null,
@@ -1097,7 +994,7 @@ export const dataCommandRepository = {
                 errorsMessages: [
                     {
                         field: "",
-                        message: "Unknown error"
+                        message: `Unknown error: ${error}`
                     }
                 ]
             };
